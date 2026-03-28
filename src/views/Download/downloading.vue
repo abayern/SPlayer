@@ -98,168 +98,168 @@
 </template>
 
 <script setup lang="ts">
-import { useDataStore } from "@/stores";
-import { useDownloadManager } from "@/core/resource/DownloadManager";
+  import { useDataStore } from "@/stores";
+  import { useDownloadManager } from "@/core/resource/DownloadManager";
 
-const dataStore = useDataStore();
-const downloadManager = useDownloadManager();
-const sortedDownloadingSongs = computed(() => {
-  return [...dataStore.downloadingSongs].sort((a, b) => {
-    // 优先级: 下载中 (1) > 等待中 (2) > 失败 (3)
-    const getPriority = (status: string) => {
-      if (status === "downloading") return 1;
-      if (status === "waiting") return 2;
-      return 3;
-    };
-    return getPriority(a.status) - getPriority(b.status);
+  const dataStore = useDataStore();
+  const downloadManager = useDownloadManager();
+  const sortedDownloadingSongs = computed(() => {
+    return [...dataStore.downloadingSongs].sort((a, b) => {
+      // 优先级: 下载中 (1) > 等待中 (2) > 失败 (3)
+      const getPriority = (status: string) => {
+        if (status === "downloading") return 1;
+        if (status === "waiting") return 2;
+        return 3;
+      };
+      return getPriority(a.status) - getPriority(b.status);
+    });
   });
-});
 
-const handleRemoveDownload = (id: number) => {
-  downloadManager.removeDownload(id);
-  window.$message.success("已删除下载任务");
-};
+  const handleRemoveDownload = (id: number) => {
+    downloadManager.removeDownload(id);
+    window.$message.success("已删除下载任务");
+  };
 </script>
 
 <style lang="scss" scoped>
-.download-downloading {
-  height: 100%;
-
-  .download-list {
+  .download-downloading {
     height: 100%;
-    display: flex;
-    flex-direction: column;
 
-    .list-header {
+    .download-list {
+      height: 100%;
       display: flex;
-      align-items: center;
-      padding: 0 12px;
-      height: 40px;
-      // background-color: var(--background-hex);
-      font-weight: normal;
+      flex-direction: column;
 
-      .n-text {
-        opacity: 0.6;
-      }
-
-      &.sticky-header {
-        position: sticky;
-        top: 0;
-        z-index: 10;
-      }
-
-      .num {
-        width: 60px;
-        text-align: center;
-      }
-      .title {
-        flex: 1;
-        padding-left: 12px;
-      }
-      .status {
-        flex: 1;
-        padding-left: 12px;
-      }
-      .actions {
-        width: 120px;
-        text-align: center;
-      }
-    }
-
-    .virtual-list {
-      height: calc(100% - 40px) !important;
-
-      .download-item {
+      .list-header {
         display: flex;
         align-items: center;
-        padding: 12px;
-        border-radius: 12px;
-        border: 2px solid rgba(var(--primary), 0.12);
-        background-color: var(--surface-container-hex);
-        margin-bottom: 12px;
-        transition: border-color 0.3s;
+        padding: 0 12px;
+        height: 40px;
+        // background-color: var(--background-hex);
+        font-weight: normal;
 
-        &:hover {
-          border-color: rgba(var(--primary), 0.58);
+        .n-text {
+          opacity: 0.6;
+        }
+
+        &.sticky-header {
+          position: sticky;
+          top: 0;
+          z-index: 10;
         }
 
         .num {
           width: 60px;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          min-width: 60px;
+          text-align: center;
         }
-
         .title {
           flex: 1;
-          display: flex;
-          align-items: center;
-          overflow: hidden;
-          padding-right: 20px;
           padding-left: 12px;
-
-          .cover {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            width: 50px;
-            height: 50px;
-            border-radius: 8px;
-            margin-right: 12px;
-            min-width: 50px;
-          }
-
-          .info {
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            flex: 1;
-
-            .name {
-              display: flex;
-              align-items: center;
-              margin-bottom: 4px;
-              overflow: hidden;
-
-              .name-text {
-                font-size: 16px;
-                margin-right: 8px;
-              }
-            }
-
-            .artists {
-              font-size: 12px;
-            }
-          }
         }
-
         .status {
           flex: 1;
-          padding-right: 20px;
           padding-left: 12px;
-
-          .downloading-progress {
-            --n-fill-color: rgb(var(--primary));
-          }
         }
-
         .actions {
           width: 120px;
+          text-align: center;
+        }
+      }
+
+      .virtual-list {
+        height: calc(100% - 40px) !important;
+
+        .download-item {
           display: flex;
-          justify-content: center;
-          min-width: 120px;
-          .n-button {
-            border-radius: 8px;
+          align-items: center;
+          padding: 12px;
+          border-radius: 12px;
+          border: 2px solid rgba(var(--primary), 0.12);
+          background-color: var(--surface-container-hex);
+          margin-bottom: 12px;
+          transition: border-color 0.3s;
+
+          &:hover {
+            border-color: rgba(var(--primary), 0.58);
+          }
+
+          .num {
+            width: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-width: 60px;
+          }
+
+          .title {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+            padding-right: 20px;
+            padding-left: 12px;
+
+            .cover {
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              overflow: hidden;
+              width: 50px;
+              height: 50px;
+              border-radius: 8px;
+              margin-right: 12px;
+              min-width: 50px;
+            }
+
+            .info {
+              display: flex;
+              flex-direction: column;
+              overflow: hidden;
+              flex: 1;
+
+              .name {
+                display: flex;
+                align-items: center;
+                margin-bottom: 4px;
+                overflow: hidden;
+
+                .name-text {
+                  font-size: 16px;
+                  margin-right: 8px;
+                }
+              }
+
+              .artists {
+                font-size: 12px;
+              }
+            }
+          }
+
+          .status {
+            flex: 1;
+            padding-right: 20px;
+            padding-left: 12px;
+
+            .downloading-progress {
+              --n-fill-color: rgb(var(--primary));
+            }
+          }
+
+          .actions {
+            width: 120px;
+            display: flex;
+            justify-content: center;
+            min-width: 120px;
+            .n-button {
+              border-radius: 8px;
+            }
           }
         }
       }
     }
-  }
 
-  .empty {
-    margin-top: 60px;
+    .empty {
+      margin-top: 60px;
+    }
   }
-}
 </style>

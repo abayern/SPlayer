@@ -36,40 +36,40 @@
 </template>
 
 <script setup lang="ts">
-import { SettingItem } from "@/types/settings";
+  import { SettingItem } from "@/types/settings";
 
-defineProps<{ item?: SettingItem }>();
+  defineProps<{ item?: SettingItem }>();
 
-const cacheLimit = ref<number>(10);
-const cacheLimited = ref<number>(1);
+  const cacheLimit = ref<number>(10);
+  const cacheLimited = ref<number>(1);
 
-const changeCacheLimit = async (value: number) => {
-  await window.api.store.set("cacheLimit", value);
-};
+  const changeCacheLimit = async (value: number) => {
+    await window.api.store.set("cacheLimit", value);
+  };
 
-const onUpdateLimit = (value: number | null) => {
-  cacheLimit.value = value ?? 2;
-  changeCacheLimit(cacheLimit.value);
-};
-
-const onUpdateLimited = (value: number) => {
-  if (value === 0) {
-    changeCacheLimit(0);
-  } else {
-    if (cacheLimit.value === 0) cacheLimit.value = 2;
+  const onUpdateLimit = (value: number | null) => {
+    cacheLimit.value = value ?? 2;
     changeCacheLimit(cacheLimit.value);
-  }
-};
+  };
 
-onMounted(async () => {
-  try {
-    const limit = await window.api.store.get("cacheLimit");
-    if (typeof limit === "number") {
-      cacheLimit.value = limit;
-      if (limit === 0) cacheLimited.value = 0;
+  const onUpdateLimited = (value: number) => {
+    if (value === 0) {
+      changeCacheLimit(0);
+    } else {
+      if (cacheLimit.value === 0) cacheLimit.value = 2;
+      changeCacheLimit(cacheLimit.value);
     }
-  } catch (error) {
-    console.error("读取缓存配置失败:", error);
-  }
-});
+  };
+
+  onMounted(async () => {
+    try {
+      const limit = await window.api.store.get("cacheLimit");
+      if (typeof limit === "number") {
+        cacheLimit.value = limit;
+        if (limit === 0) cacheLimited.value = 0;
+      }
+    } catch (error) {
+      console.error("读取缓存配置失败:", error);
+    }
+  });
 </script>

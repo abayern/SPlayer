@@ -77,163 +77,163 @@
 </template>
 
 <script setup lang="ts">
-import { useSettingStore, useDataStore } from "@/stores";
-import type { SongType } from "@/types/main";
-import { formatSongsList } from "@/utils/format";
-import { usePlayerController } from "@/core/player/PlayerController";
-import type { MessageReactive } from "naive-ui";
-import { useDownloadManager } from "@/core/resource/DownloadManager";
+  import { useSettingStore, useDataStore } from "@/stores";
+  import type { SongType } from "@/types/main";
+  import { formatSongsList } from "@/utils/format";
+  import { usePlayerController } from "@/core/player/PlayerController";
+  import type { MessageReactive } from "naive-ui";
+  import { useDownloadManager } from "@/core/resource/DownloadManager";
 
-const route = useRoute();
-const router = useRouter();
-const dataStore = useDataStore();
-const settingStore = useSettingStore();
+  const route = useRoute();
+  const router = useRouter();
+  const dataStore = useDataStore();
+  const settingStore = useSettingStore();
 
-const player = usePlayerController();
-const downloadManager = useDownloadManager();
+  const player = usePlayerController();
+  const downloadManager = useDownloadManager();
 
-const loading = ref<boolean>(false);
-const loadingMsg = ref<MessageReactive | null>(null);
-const listData = ref<SongType[]>([]);
+  const loading = ref<boolean>(false);
+  const loadingMsg = ref<MessageReactive | null>(null);
+  const listData = ref<SongType[]>([]);
 
-const currentTab = ref<string>((route.name as string) || "download-downloaded");
+  const currentTab = ref<string>((route.name as string) || "download-downloaded");
 
-const handlePlayAll = () => {
-  if (currentTab.value === "download-downloaded") {
-    player.updatePlayList(listData.value);
-  }
-};
+  const handlePlayAll = () => {
+    if (currentTab.value === "download-downloaded") {
+      player.updatePlayList(listData.value);
+    }
+  };
 
-// 当前标签页的歌曲数量
-const currentCount = computed(() => {
-  if (currentTab.value === "download-downloading") {
-    return dataStore.downloadingSongs.length;
-  }
-  return listData.value.length;
-});
+  // 当前标签页的歌曲数量
+  const currentCount = computed(() => {
+    if (currentTab.value === "download-downloading") {
+      return dataStore.downloadingSongs.length;
+    }
+    return listData.value.length;
+  });
 
-const handleTabChange = (name: string) => {
-  router.push({ name });
-};
+  const handleTabChange = (name: string) => {
+    router.push({ name });
+  };
 
-watch(
-  () => route.name,
-  (newName) => {
-    if (newName && (newName as string).startsWith("download-")) {
-      currentTab.value = newName as string;
-      if (newName === "download-downloaded") {
-        getDownloadMusic();
+  watch(
+    () => route.name,
+    (newName) => {
+      if (newName && (newName as string).startsWith("download-")) {
+        currentTab.value = newName as string;
+        if (newName === "download-downloaded") {
+          getDownloadMusic();
+        }
       }
+    },
+  );
+
+  /**
+   * 获取下载音乐
+   * @param showTip 是否展示加载提示
+   */
+  const getDownloadMusic = async (showTip: boolean = false) => {
+    try {
+      const path = settingStore.downloadPath;
+      if (!path) {
+        if (showTip) window.$message.warning("未设置下载路径");
+        return;
+      }
+
+      if (showTip) {
+        loadingMsg.value = window.$message.loading("正在获取下载歌曲", {
+          duration: 0,
+        });
+      }
+
+      loading.value = true;
+      const result = await downloadManager.getDownloadedSongs();
+
+      if (result) {
+        listData.value = formatSongsList(result);
+        if (showTip) window.$message.success(`已发现 ${listData.value.length} 首`);
+      } else {
+        listData.value = [];
+      }
+    } catch (error) {
+      console.error("获取下载音乐失败:", error);
+      window.$message.error("获取下载音乐失败");
+    } finally {
+      loading.value = false;
+      loadingMsg.value?.destroy();
+      loadingMsg.value = null;
     }
-  },
-);
+  };
 
-/**
- * 获取下载音乐
- * @param showTip 是否展示加载提示
- */
-const getDownloadMusic = async (showTip: boolean = false) => {
-  try {
-    const path = settingStore.downloadPath;
-    if (!path) {
-      if (showTip) window.$message.warning("未设置下载路径");
-      return;
-    }
+  // 刷新列表
+  provide("getDownloadMusic", () => getDownloadMusic(false));
 
-    if (showTip) {
-      loadingMsg.value = window.$message.loading("正在获取下载歌曲", {
-        duration: 0,
-      });
-    }
-
-    loading.value = true;
-    const result = await downloadManager.getDownloadedSongs();
-
-    if (result) {
-      listData.value = formatSongsList(result);
-      if (showTip) window.$message.success(`已发现 ${listData.value.length} 首`);
-    } else {
-      listData.value = [];
-    }
-  } catch (error) {
-    console.error("获取下载音乐失败:", error);
-    window.$message.error("获取下载音乐失败");
-  } finally {
-    loading.value = false;
-    loadingMsg.value?.destroy();
-    loadingMsg.value = null;
-  }
-};
-
-// 刷新列表
-provide("getDownloadMusic", () => getDownloadMusic(false));
-
-onMounted(() => {
-  getDownloadMusic();
-});
-
-onActivated(() => {
-  if (currentTab.value === "download-downloaded") {
+  onMounted(() => {
     getDownloadMusic();
-  }
-});
+  });
+
+  onActivated(() => {
+    if (currentTab.value === "download-downloaded") {
+      getDownloadMusic();
+    }
+  });
 </script>
 
 <style lang="scss" scoped>
-.download {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  .title {
+  .download {
     display: flex;
-    align-items: flex-end;
-    line-height: normal;
-    margin-top: 12px;
-    margin-bottom: 20px;
-    height: 40px;
-    .keyword {
-      font-size: 30px;
-      font-weight: bold;
-      margin-right: 12px;
+    flex-direction: column;
+    height: 100%;
+    .title {
+      display: flex;
+      align-items: flex-end;
       line-height: normal;
-    }
-    .status {
-      font-size: 15px;
-      font-weight: normal;
-      line-height: 30px;
-      .item {
-        display: flex;
-        align-items: center;
-        opacity: 0.9;
-        .n-icon {
-          margin-right: 4px;
+      margin-top: 12px;
+      margin-bottom: 20px;
+      height: 40px;
+      .keyword {
+        font-size: 30px;
+        font-weight: bold;
+        margin-right: 12px;
+        line-height: normal;
+      }
+      .status {
+        font-size: 15px;
+        font-weight: normal;
+        line-height: 30px;
+        .item {
+          display: flex;
+          align-items: center;
+          opacity: 0.9;
+          .n-icon {
+            margin-right: 4px;
+          }
         }
       }
     }
-  }
-  .menu {
-    width: 100%;
-    margin-bottom: 20px;
-    height: 40px;
-    .n-button {
+    .menu {
+      width: 100%;
+      margin-bottom: 20px;
       height: 40px;
-      transition: all 0.3s var(--n-bezier);
-    }
-    .more {
-      width: 40px;
-    }
-    .n-tabs {
-      width: 200px;
-      --n-tab-border-radius: 25px !important;
-      :deep(.n-tabs-rail) {
-        outline: 1px solid var(--n-tab-color-segment);
+      .n-button {
+        height: 40px;
+        transition: all 0.3s var(--n-bezier);
+      }
+      .more {
+        width: 40px;
+      }
+      .n-tabs {
+        width: 200px;
+        --n-tab-border-radius: 25px !important;
+        :deep(.n-tabs-rail) {
+          outline: 1px solid var(--n-tab-color-segment);
+        }
       }
     }
+    .router-view {
+      flex: 1;
+      overflow: hidden;
+      max-height: calc((var(--layout-height) - 132) * 1px);
+    }
   }
-  .router-view {
-    flex: 1;
-    overflow: hidden;
-    max-height: calc((var(--layout-height) - 132) * 1px);
-  }
-}
 </style>

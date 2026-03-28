@@ -91,197 +91,197 @@
 </template>
 
 <script setup lang="ts">
-import type { SongType } from "@/types/main";
-import type { DropdownOption } from "naive-ui";
-import { useDataStore } from "@/stores";
-import { userCloud } from "@/api/cloud";
-import { formatSongsList } from "@/utils/format";
-import { fuzzySearch, renderIcon } from "@/utils/helper";
-import { openBatchList } from "@/utils/modal";
-import { usePlayerController } from "@/core/player/PlayerController";
+  import type { SongType } from "@/types/main";
+  import type { DropdownOption } from "naive-ui";
+  import { useDataStore } from "@/stores";
+  import { userCloud } from "@/api/cloud";
+  import { formatSongsList } from "@/utils/format";
+  import { fuzzySearch, renderIcon } from "@/utils/helper";
+  import { openBatchList } from "@/utils/modal";
+  import { usePlayerController } from "@/core/player/PlayerController";
 
-const router = useRouter();
-const dataStore = useDataStore();
-const player = usePlayerController();
+  const router = useRouter();
+  const dataStore = useDataStore();
+  const player = usePlayerController();
 
-// 是否激活
-const isActivated = ref<boolean>(false);
+  // 是否激活
+  const isActivated = ref<boolean>(false);
 
-// 云盘数据
-const loading = ref<boolean>(false);
-const cloudCount = ref<number>(0);
-const cloudData = ref<SongType[]>(dataStore.cloudPlayList);
-const cloudSize = ref<{ size: number; maxSize: number }>({ size: 0, maxSize: 0 });
+  // 云盘数据
+  const loading = ref<boolean>(false);
+  const cloudCount = ref<number>(0);
+  const cloudData = ref<SongType[]>(dataStore.cloudPlayList);
+  const cloudSize = ref<{ size: number; maxSize: number }>({ size: 0, maxSize: 0 });
 
-// 模糊搜索数据
-const searchValue = ref<string>("");
-const searchData = ref<SongType[]>([]);
+  // 模糊搜索数据
+  const searchValue = ref<string>("");
+  const searchData = ref<SongType[]>([]);
 
-// 列表歌曲
-const listDataShow = computed<SongType[]>(() => {
-  if (searchValue.value && searchData.value.length) return searchData.value;
-  return cloudData.value;
-});
+  // 列表歌曲
+  const listDataShow = computed<SongType[]>(() => {
+    if (searchValue.value && searchData.value.length) return searchData.value;
+    return cloudData.value;
+  });
 
-// 加载状态
-const showLoading = computed(() => cloudData.value.length === 0 && loading.value);
+  // 加载状态
+  const showLoading = computed(() => cloudData.value.length === 0 && loading.value);
 
-// 是否处于云盘页面
-const isCloudPage = computed<boolean>(() => router.currentRoute.value.name === "cloud");
+  // 是否处于云盘页面
+  const isCloudPage = computed<boolean>(() => router.currentRoute.value.name === "cloud");
 
-// 更多操作
-const moreOptions = computed<DropdownOption[]>(() => [
-  {
-    label: "批量操作",
-    key: "batch",
-    props: {
-      onClick: () => openBatchList(cloudData.value, false),
+  // 更多操作
+  const moreOptions = computed<DropdownOption[]>(() => [
+    {
+      label: "批量操作",
+      key: "batch",
+      props: {
+        onClick: () => openBatchList(cloudData.value, false),
+      },
+      icon: renderIcon("Batch"),
     },
-    icon: renderIcon("Batch"),
-  },
-]);
+  ]);
 
-// 获取全部云盘歌曲
-const getAllCloudMusic = async () => {
-  loading.value = true;
-  // 必要数据
-  let offset: number = 0;
-  const limit: number = 500;
-  const listData: SongType[] = [];
-  // 循环获取
-  do {
-    const result = await userCloud(limit, offset);
-    const songData = formatSongsList(result.data);
-    // 歌曲总数
-    cloudCount.value = result.count;
-    // 云盘空间
-    cloudSize.value = {
-      size: Number((result.size / Math.pow(1024, 3)).toFixed(2)),
-      maxSize: Number((result.maxSize / Math.pow(1024, 3)).toFixed(0)),
-    };
-    // 更新数据
-    listData.push(...songData);
-    cloudData.value = listData;
-    offset += limit;
-  } while (offset < cloudCount.value && isCloudPage.value);
-  // 更新云盘数据
-  dataStore.setCloudPlayList(cloudData.value);
-  loading.value = false;
-};
+  // 获取全部云盘歌曲
+  const getAllCloudMusic = async () => {
+    loading.value = true;
+    // 必要数据
+    let offset: number = 0;
+    const limit: number = 500;
+    const listData: SongType[] = [];
+    // 循环获取
+    do {
+      const result = await userCloud(limit, offset);
+      const songData = formatSongsList(result.data);
+      // 歌曲总数
+      cloudCount.value = result.count;
+      // 云盘空间
+      cloudSize.value = {
+        size: Number((result.size / Math.pow(1024, 3)).toFixed(2)),
+        maxSize: Number((result.maxSize / Math.pow(1024, 3)).toFixed(0)),
+      };
+      // 更新数据
+      listData.push(...songData);
+      cloudData.value = listData;
+      offset += limit;
+    } while (offset < cloudCount.value && isCloudPage.value);
+    // 更新云盘数据
+    dataStore.setCloudPlayList(cloudData.value);
+    loading.value = false;
+  };
 
-watchDebounced(
-  () => [searchValue.value, cloudData.value],
-  () => {
-    const search = searchValue.value.trim();
-    if (!search || search === "" || !cloudData.value.length) return;
-    // 获取搜索结果
-    const result = fuzzySearch(search, cloudData.value);
-    searchData.value = result;
-  },
-  { debounce: 300, maxWait: 1000 },
-);
+  watchDebounced(
+    () => [searchValue.value, cloudData.value],
+    () => {
+      const search = searchValue.value.trim();
+      if (!search || search === "" || !cloudData.value.length) return;
+      // 获取搜索结果
+      const result = fuzzySearch(search, cloudData.value);
+      searchData.value = result;
+    },
+    { debounce: 300, maxWait: 1000 },
+  );
 
-// 处理删除歌曲
-const handleRemoveSong = (ids: number[]) => {
-  // 从云盘数据中删除指定ID的歌曲
-  const updatedCloudData = cloudData.value.filter((song) => !ids.includes(song.id));
-  cloudData.value = updatedCloudData;
-  // 同步更新store中的数据
-  dataStore.setCloudPlayList(updatedCloudData);
-  // listVersion.value++;
-};
+  // 处理删除歌曲
+  const handleRemoveSong = (ids: number[]) => {
+    // 从云盘数据中删除指定ID的歌曲
+    const updatedCloudData = cloudData.value.filter((song) => !ids.includes(song.id));
+    cloudData.value = updatedCloudData;
+    // 同步更新store中的数据
+    dataStore.setCloudPlayList(updatedCloudData);
+    // listVersion.value++;
+  };
 
-onActivated(() => {
-  if (!isActivated.value) {
-    isActivated.value = true;
-  } else {
-    getAllCloudMusic();
-  }
-});
+  onActivated(() => {
+    if (!isActivated.value) {
+      isActivated.value = true;
+    } else {
+      getAllCloudMusic();
+    }
+  });
 
-onMounted(getAllCloudMusic);
+  onMounted(getAllCloudMusic);
 </script>
 
 <style lang="scss" scoped>
-.cloud {
-  display: flex;
-  flex-direction: column;
-  .title {
+  .cloud {
     display: flex;
-    align-items: flex-end;
-    line-height: normal;
-    margin-top: 12px;
-    margin-bottom: 20px;
-    height: 40px;
-    .keyword {
-      font-size: 30px;
-      font-weight: bold;
-      margin-right: 12px;
+    flex-direction: column;
+    .title {
+      display: flex;
+      align-items: flex-end;
       line-height: normal;
-    }
-    .status {
-      font-size: 15px;
-      font-weight: normal;
-      line-height: 30px;
-      .item {
-        display: flex;
-        align-items: center;
-        opacity: 0.9;
-        .n-icon {
-          margin-right: 4px;
-        }
+      margin-top: 12px;
+      margin-bottom: 20px;
+      height: 40px;
+      .keyword {
+        font-size: 30px;
+        font-weight: bold;
+        margin-right: 12px;
+        line-height: normal;
       }
-      .n-progress {
-        --n-fill-color: var(--primary-hex);
-        margin-left: 4px;
-        cursor: pointer;
-        :deep(.n-progress-graph) {
-          width: 80px;
+      .status {
+        font-size: 15px;
+        font-weight: normal;
+        line-height: 30px;
+        .item {
+          display: flex;
+          align-items: center;
+          opacity: 0.9;
+          .n-icon {
+            margin-right: 4px;
+          }
         }
-        .space {
-          display: inline-block;
-          font-size: 12px;
-          transform: translateX(-5px);
-          opacity: 0;
-          transition:
-            opacity 0.3s,
-            transform 0.3s;
-        }
-        &:hover {
+        .n-progress {
+          --n-fill-color: var(--primary-hex);
+          margin-left: 4px;
+          cursor: pointer;
+          :deep(.n-progress-graph) {
+            width: 80px;
+          }
           .space {
-            opacity: 1;
-            transform: translateX(0);
+            display: inline-block;
+            font-size: 12px;
+            transform: translateX(-5px);
+            opacity: 0;
+            transition:
+              opacity 0.3s,
+              transform 0.3s;
+          }
+          &:hover {
+            .space {
+              opacity: 1;
+              transform: translateX(0);
+            }
           }
         }
       }
     }
-  }
-  .menu {
-    width: 100%;
-    margin-bottom: 20px;
-    height: 40px;
-    .n-button {
+    .menu {
+      width: 100%;
+      margin-bottom: 20px;
       height: 40px;
-    }
-    .more {
-      width: 40px;
-    }
-    .search {
-      height: 40px;
-      width: 130px;
-      display: flex;
-      align-items: center;
-      border-radius: 25px;
-      transition: all 0.3s var(--n-bezier);
-      &.n-input--focus {
-        width: 200px;
+      .n-button {
+        height: 40px;
+      }
+      .more {
+        width: 40px;
+      }
+      .search {
+        height: 40px;
+        width: 130px;
+        display: flex;
+        align-items: center;
+        border-radius: 25px;
+        transition: all 0.3s var(--n-bezier);
+        &.n-input--focus {
+          width: 200px;
+        }
       }
     }
+    .song-list {
+      flex: 1;
+      overflow: hidden;
+      max-height: calc((var(--layout-height) - 132) * 1px);
+    }
   }
-  .song-list {
-    flex: 1;
-    overflow: hidden;
-    max-height: calc((var(--layout-height) - 132) * 1px);
-  }
-}
 </style>

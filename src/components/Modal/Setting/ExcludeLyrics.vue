@@ -107,159 +107,159 @@
 </template>
 
 <script setup lang="ts">
-import { useSettingStore } from "@/stores";
-import { isElectron } from "@/utils/env";
+  import { useSettingStore } from "@/stores";
+  import { isElectron } from "@/utils/env";
 
-const emit = defineEmits(["close"]);
+  const emit = defineEmits(["close"]);
 
-const settingStore = useSettingStore();
+  const settingStore = useSettingStore();
 
-const enableExcludeLyrics = ref(settingStore.enableExcludeLyrics);
-const enableExcludeTTML = ref(settingStore.enableExcludeLyricsTTML);
-const enableExcludeLocalLyrics = ref(settingStore.enableExcludeLyricsLocal);
+  const enableExcludeLyrics = ref(settingStore.enableExcludeLyrics);
+  const enableExcludeTTML = ref(settingStore.enableExcludeLyricsTTML);
+  const enableExcludeLocalLyrics = ref(settingStore.enableExcludeLyricsLocal);
 
-const filterKeywords = ref<string[]>([]);
-const filterRegexes = ref<string[]>([]);
-const page = ref("options");
+  const filterKeywords = ref<string[]>([]);
+  const filterRegexes = ref<string[]>([]);
+  const page = ref("options");
 
-// 清空关键词
-const clearKeywords = () => {
-  filterKeywords.value = [];
-};
-
-// 清空正则表达式
-const clearRegexes = () => {
-  filterRegexes.value = [];
-};
-
-// 清空全部
-const clearAll = () => {
-  filterKeywords.value = [];
-  filterRegexes.value = [];
-};
-
-// 导出规则
-const exportFilters = () => {
-  const data = {
-    keywords: settingStore.excludeLyricsUserKeywords || [],
-    regexes: settingStore.excludeLyricsUserRegexes || [],
+  // 清空关键词
+  const clearKeywords = () => {
+    filterKeywords.value = [];
   };
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "splayer-lyrics-filters.json";
-  a.click();
-  URL.revokeObjectURL(url);
-};
 
-// 导入规则
-const importFilters = () => {
-  const input = document.createElement("input");
-  input.type = "file";
-  input.accept = ".json";
-  input.onchange = (e: any) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const data = JSON.parse(e.target?.result as string);
-        if (data.keywords && Array.isArray(data.keywords)) {
-          filterKeywords.value = data.keywords;
-        }
-        if (data.regexes && Array.isArray(data.regexes)) {
-          filterRegexes.value = data.regexes;
-        }
-        window.$message.success("规则导入成功");
-      } catch (error) {
-        console.error("Import filters error:", error);
-        window.$message.error("规则文件解析失败");
-      }
+  // 清空正则表达式
+  const clearRegexes = () => {
+    filterRegexes.value = [];
+  };
+
+  // 清空全部
+  const clearAll = () => {
+    filterKeywords.value = [];
+    filterRegexes.value = [];
+  };
+
+  // 导出规则
+  const exportFilters = () => {
+    const data = {
+      keywords: settingStore.excludeLyricsUserKeywords || [],
+      regexes: settingStore.excludeLyricsUserRegexes || [],
     };
-    reader.readAsText(file);
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "splayer-lyrics-filters.json";
+    a.click();
+    URL.revokeObjectURL(url);
   };
-  input.click();
-};
 
-// 保存过滤
-const saveFilter = () => {
-  settingStore.enableExcludeLyrics = enableExcludeLyrics.value;
-  settingStore.enableExcludeLyricsTTML = enableExcludeTTML.value;
-  settingStore.enableExcludeLyricsLocal = enableExcludeLocalLyrics.value;
-  settingStore.excludeLyricsUserKeywords = filterKeywords.value;
-  settingStore.excludeLyricsUserRegexes = filterRegexes.value;
-  window.$message.success("设置已保存");
-  handleClose();
-};
+  // 导入规则
+  const importFilters = () => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".json";
+    input.onchange = (e: any) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = JSON.parse(e.target?.result as string);
+          if (data.keywords && Array.isArray(data.keywords)) {
+            filterKeywords.value = data.keywords;
+          }
+          if (data.regexes && Array.isArray(data.regexes)) {
+            filterRegexes.value = data.regexes;
+          }
+          window.$message.success("规则导入成功");
+        } catch (error) {
+          console.error("Import filters error:", error);
+          window.$message.error("规则文件解析失败");
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  };
 
-const handleClose = () => {
-  emit("close");
-};
+  // 保存过滤
+  const saveFilter = () => {
+    settingStore.enableExcludeLyrics = enableExcludeLyrics.value;
+    settingStore.enableExcludeLyricsTTML = enableExcludeTTML.value;
+    settingStore.enableExcludeLyricsLocal = enableExcludeLocalLyrics.value;
+    settingStore.excludeLyricsUserKeywords = filterKeywords.value;
+    settingStore.excludeLyricsUserRegexes = filterRegexes.value;
+    window.$message.success("设置已保存");
+    handleClose();
+  };
 
-onMounted(() => {
-  enableExcludeLyrics.value = settingStore.enableExcludeLyrics;
-  enableExcludeTTML.value = settingStore.enableExcludeLyricsTTML;
-  enableExcludeLocalLyrics.value = settingStore.enableExcludeLyricsLocal;
-  filterKeywords.value = [...(settingStore.excludeLyricsUserKeywords || [])];
-  filterRegexes.value = [...(settingStore.excludeLyricsUserRegexes || [])];
-});
+  const handleClose = () => {
+    emit("close");
+  };
+
+  onMounted(() => {
+    enableExcludeLyrics.value = settingStore.enableExcludeLyrics;
+    enableExcludeTTML.value = settingStore.enableExcludeLyricsTTML;
+    enableExcludeLocalLyrics.value = settingStore.enableExcludeLyricsLocal;
+    filterKeywords.value = [...(settingStore.excludeLyricsUserKeywords || [])];
+    filterRegexes.value = [...(settingStore.excludeLyricsUserRegexes || [])];
+  });
 </script>
 
 <style lang="scss" scoped>
-.exclude-lyrics-modal {
-  padding: 0;
-  .switch-card {
-    width: 100%;
-    border-radius: 8px;
-    .n-text {
-      font-size: 16px;
-    }
-  }
-
-  .set-list {
-    margin-bottom: 24px;
-    &:last-child {
-      margin-bottom: 0;
-    }
-  }
-  .set-item {
-    width: 100%;
-    border-radius: 8px;
-    margin-bottom: 12px;
-    transition: margin 0.3s;
-    &:last-child {
-      margin-bottom: 0;
-    }
-    :deep(.n-card__content) {
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      justify-content: space-between;
-      padding: 16px;
-    }
-    .label {
-      display: flex;
-      flex-direction: column;
-      padding-right: 20px;
-      .name {
+  .exclude-lyrics-modal {
+    padding: 0;
+    .switch-card {
+      width: 100%;
+      border-radius: 8px;
+      .n-text {
         font-size: 16px;
       }
     }
-    .n-flex {
-      flex-flow: nowrap !important;
-    }
-    .set {
-      justify-content: flex-end;
-      width: 200px;
-      &.n-switch {
-        width: max-content;
+
+    .set-list {
+      margin-bottom: 24px;
+      &:last-child {
+        margin-bottom: 0;
       }
-      @media (max-width: 768px) {
-        width: 140px;
-        min-width: 140px;
+    }
+    .set-item {
+      width: 100%;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      transition: margin 0.3s;
+      &:last-child {
+        margin-bottom: 0;
+      }
+      :deep(.n-card__content) {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px;
+      }
+      .label {
+        display: flex;
+        flex-direction: column;
+        padding-right: 20px;
+        .name {
+          font-size: 16px;
+        }
+      }
+      .n-flex {
+        flex-flow: nowrap !important;
+      }
+      .set {
+        justify-content: flex-end;
+        width: 200px;
+        &.n-switch {
+          width: max-content;
+        }
+        @media (max-width: 768px) {
+          width: 140px;
+          min-width: 140px;
+        }
       }
     }
   }
-}
 </style>

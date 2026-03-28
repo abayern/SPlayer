@@ -10,8 +10,8 @@
 </template>
 
 <script setup lang="ts">
-import { useDataStore, useSettingStore } from "@/stores";
+  import { useDataStore, useSettingStore } from "@/stores";
 
-const dataStore = useDataStore();
-const settingStore = useSettingStore();
+  const dataStore = useDataStore();
+  const settingStore = useSettingStore();
 </script>

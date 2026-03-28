@@ -37,61 +37,61 @@
 </template>
 
 <script setup lang="ts">
-import { useSettingStore } from "@/stores";
-const route = useRoute();
-const router = useRouter();
-const settingStore = useSettingStore();
+  import { useSettingStore } from "@/stores";
+  const route = useRoute();
+  const router = useRouter();
+  const settingStore = useSettingStore();
 
-// 搜索关键词
-const searchKeyword = computed(() => route.query.keyword as string);
+  // 搜索关键词
+  const searchKeyword = computed(() => route.query.keyword as string);
 
-// 搜索分类
-const searchType = ref<string>("search-songs");
+  // 搜索分类
+  const searchType = ref<string>("search-songs");
 
-// Tabs 改变
-const tabChange = (value: string) => {
-  router.push({
-    name: value,
-    query: {
-      keyword: searchKeyword.value,
+  // Tabs 改变
+  const tabChange = (value: string) => {
+    router.push({
+      name: value,
+      query: {
+        keyword: searchKeyword.value,
+      },
+    });
+  };
+
+  // 监听路由变化，同步 Tab 状态
+  watch(
+    () => route.name,
+    (name) => {
+      if (name && name.toString().startsWith("search-")) {
+        searchType.value = name as string;
+      }
     },
-  });
-};
-
-// 监听路由变化，同步 Tab 状态
-watch(
-  () => route.name,
-  (name) => {
-    if (name && name.toString().startsWith("search-")) {
-      searchType.value = name as string;
-    }
-  },
-  { immediate: true },
-);
+    { immediate: true },
+  );
 </script>
 
 <style lang="scss" scoped>
-.search {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  .title {
-    margin-top: 12px;
-    margin-bottom: 12px;
-    font-size: 22px;
-    .keyword {
-      font-size: 36px;
-      font-weight: bold;
-      margin-right: 8px;
-      line-height: normal;
+  .search {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    .title {
+      margin-top: 12px;
+      margin-bottom: 12px;
+      font-size: 22px;
+      .keyword {
+        font-size: 36px;
+        font-weight: bold;
+        margin-right: 8px;
+        line-height: normal;
+      }
+      .n-text {
+        display: inline-block;
+      }
     }
-    .n-text {
-      display: inline-block;
+    .router-view {
+      flex: 1;
+      overflow: hidden;
     }
   }
-  .router-view {
-    flex: 1;
-    overflow: hidden;
-  }
-}
 </style>

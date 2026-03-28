@@ -48,75 +48,75 @@
 </template>
 
 <script setup lang="ts">
-import type { DropdownOption } from "naive-ui";
-import { useMusicStore } from "@/stores";
-import { updateDailySongsData } from "@/utils/auth";
-import { formatTimestamp } from "@/utils/time";
-import { renderIcon } from "@/utils/helper";
-import { openBatchList } from "@/utils/modal";
-import { usePlayerController } from "@/core/player/PlayerController";
+  import type { DropdownOption } from "naive-ui";
+  import { useMusicStore } from "@/stores";
+  import { updateDailySongsData } from "@/utils/auth";
+  import { formatTimestamp } from "@/utils/time";
+  import { renderIcon } from "@/utils/helper";
+  import { openBatchList } from "@/utils/modal";
+  import { usePlayerController } from "@/core/player/PlayerController";
 
-const player = usePlayerController();
-const musicStore = useMusicStore();
+  const player = usePlayerController();
+  const musicStore = useMusicStore();
 
-// 更新日期
-const updatedTime = computed(() =>
-  formatTimestamp(musicStore.dailySongsData.timestamp || 0, "MM-DD HH:mm"),
-);
+  // 更新日期
+  const updatedTime = computed(() =>
+    formatTimestamp(musicStore.dailySongsData.timestamp || 0, "MM-DD HH:mm"),
+  );
 
-// 更多操作
-const moreOptions = computed<DropdownOption[]>(() => [
-  {
-    label: "更新日推",
-    key: "refresh",
-    props: {
-      onClick: async () => {
-        await updateDailySongsData(true);
+  // 更多操作
+  const moreOptions = computed<DropdownOption[]>(() => [
+    {
+      label: "更新日推",
+      key: "refresh",
+      props: {
+        onClick: async () => {
+          await updateDailySongsData(true);
+        },
       },
+      icon: renderIcon("Refresh"),
     },
-    icon: renderIcon("Refresh"),
-  },
-  {
-    label: "批量操作",
-    key: "batch",
-    props: {
-      onClick: () => openBatchList(musicStore.dailySongsData.list, false),
+    {
+      label: "批量操作",
+      key: "batch",
+      props: {
+        onClick: () => openBatchList(musicStore.dailySongsData.list, false),
+      },
+      icon: renderIcon("Batch"),
     },
-    icon: renderIcon("Batch"),
-  },
-]);
+  ]);
 
-onActivated(updateDailySongsData);
-onMounted(updateDailySongsData);
+  onActivated(updateDailySongsData);
+  onMounted(updateDailySongsData);
 </script>
 
 <style lang="scss" scoped>
-.daily-songs {
-  .title {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    height: 300px;
-    margin-bottom: 20px;
-    .name {
-      font-size: 55px;
-      font-weight: bold;
-      animation: fade-spacing 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  .daily-songs {
+    .title {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      height: 300px;
+      margin-bottom: 20px;
+      .name {
+        font-size: 55px;
+        font-weight: bold;
+        animation: fade-spacing 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+      }
+      .tip {
+        font-size: 16px;
+        margin-top: 6px;
+        opacity: 0;
+        animation: fade-down 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        animation-delay: 0.5s;
+      }
+      .menu {
+        margin-top: 30px;
+      }
     }
-    .tip {
-      font-size: 16px;
-      margin-top: 6px;
-      opacity: 0;
-      animation: fade-down 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-      animation-delay: 0.5s;
-    }
-    .menu {
-      margin-top: 30px;
+    .song-list {
+      height: auto;
     }
   }
-  .song-list {
-    height: auto;
-  }
-}
 </style>

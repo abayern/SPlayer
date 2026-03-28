@@ -61,175 +61,175 @@
 </template>
 
 <script setup lang="ts">
-import { searchHot } from "@/api/search";
-import { getCacheData } from "@/utils/cache";
-import { useSettingStore, useStatusStore, useDataStore } from "@/stores";
+  import { searchHot } from "@/api/search";
+  import { getCacheData } from "@/utils/cache";
+  import { useSettingStore, useStatusStore, useDataStore } from "@/stores";
 
-interface SearchHotItem {
-  searchWord: string;
-  score: number;
-  content: string;
-  iconUrl?: string;
-  iconType?: number;
-}
+  interface SearchHotItem {
+    searchWord: string;
+    score: number;
+    content: string;
+    iconUrl?: string;
+    iconType?: number;
+  }
 
-const emit = defineEmits<{
-  toSearch: [keyword: string];
-}>();
+  const emit = defineEmits<{
+    toSearch: [keyword: string];
+  }>();
 
-const dataStore = useDataStore();
-const statusStore = useStatusStore();
-const settingStore = useSettingStore();
+  const dataStore = useDataStore();
+  const statusStore = useStatusStore();
+  const settingStore = useSettingStore();
 
-const searchHotData = ref<SearchHotItem[]>([]);
+  const searchHotData = ref<SearchHotItem[]>([]);
 
-// 是否展示 SearchDefault
-const isShow = computed(() => {
-  return (
-    !statusStore.searchInputValue &&
-    statusStore.searchFocus &&
-    (isShowHotSearch.value || isShowSearchHistory.value)
-  );
-});
-
-// 是否展示搜索历史
-const isShowSearchHistory = computed(() => {
-  return settingStore.showSearchHistory && dataStore.searchHistory.length > 0;
-});
-
-// 是否展示热搜榜
-const isShowHotSearch = computed(() => {
-  return (
-    settingStore.useOnlineService && settingStore.showHotSearch && searchHotData.value.length > 0
-  );
-});
-
-// 获取热搜数据
-const getSearchHotData = async () => {
-  if (!settingStore.useOnlineService || !settingStore.showHotSearch) return;
-  const result = await getCacheData(searchHot, {
-    key: "searchHotData",
-    time: 10,
+  // 是否展示 SearchDefault
+  const isShow = computed(() => {
+    return (
+      !statusStore.searchInputValue &&
+      statusStore.searchFocus &&
+      (isShowHotSearch.value || isShowSearchHistory.value)
+    );
   });
-  searchHotData.value = result.data;
-};
 
-// 删除搜索历史
-const deleteSearchHistory = () => {
-  window.$dialog.warning({
-    title: "删除搜索历史",
-    content: "确认删除全部的搜索历史？这将无法恢复！",
-    positiveText: "确认",
-    negativeText: "取消",
-    onPositiveClick: () => {
-      dataStore.searchHistory = [];
-    },
+  // 是否展示搜索历史
+  const isShowSearchHistory = computed(() => {
+    return settingStore.showSearchHistory && dataStore.searchHistory.length > 0;
   });
-};
 
-onMounted(() => {
-  getSearchHotData();
-});
+  // 是否展示热搜榜
+  const isShowHotSearch = computed(() => {
+    return (
+      settingStore.useOnlineService && settingStore.showHotSearch && searchHotData.value.length > 0
+    );
+  });
+
+  // 获取热搜数据
+  const getSearchHotData = async () => {
+    if (!settingStore.useOnlineService || !settingStore.showHotSearch) return;
+    const result = await getCacheData(searchHot, {
+      key: "searchHotData",
+      time: 10,
+    });
+    searchHotData.value = result.data;
+  };
+
+  // 删除搜索历史
+  const deleteSearchHistory = () => {
+    window.$dialog.warning({
+      title: "删除搜索历史",
+      content: "确认删除全部的搜索历史？这将无法恢复！",
+      positiveText: "确认",
+      negativeText: "取消",
+      onPositiveClick: () => {
+        dataStore.searchHistory = [];
+      },
+    });
+  };
+
+  onMounted(() => {
+    getSearchHotData();
+  });
 </script>
 
 <style lang="scss" scoped>
-.search-default {
-  position: absolute;
-  left: 0;
-  top: 50px;
-  width: 300px;
-  border-radius: 8px;
-  z-index: 101;
-  &.fadeDown-enter-to {
-    transition-delay: 0.25s;
-  }
-  :deep(.scrollbar) {
-    max-height: calc(100vh - 160px);
-    .n-scrollbar-content {
-      padding: 10px;
+  .search-default {
+    position: absolute;
+    left: 0;
+    top: 50px;
+    width: 300px;
+    border-radius: 8px;
+    z-index: 101;
+    &.fadeDown-enter-to {
+      transition-delay: 0.25s;
     }
-  }
-  @media (max-width: 768px) {
-    width: 100%;
-  }
-  .title {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    margin-bottom: 12px;
-    .n-icon {
-      font-size: 18px;
-      margin-right: 4px;
-    }
-  }
-  .history {
-    margin-bottom: 20px;
-    .delete {
-      margin-left: auto;
-      opacity: 0.6;
-      transition: opacity 0.3s;
-      cursor: pointer;
-      &:hover {
-        opacity: 1;
+    :deep(.scrollbar) {
+      max-height: calc(100vh - 160px);
+      .n-scrollbar-content {
+        padding: 10px;
       }
     }
-  }
-  .hot-list {
-    .hot-item {
+    @media (max-width: 768px) {
+      width: 100%;
+    }
+    .title {
       display: flex;
       flex-direction: row;
       align-items: center;
-      justify-content: space-between;
-      margin-bottom: 8px;
-      border-radius: 8px;
-      padding: 6px;
-      transition: background-color 0.3s;
-      cursor: pointer;
-      .num {
-        width: 30px;
-        height: 30px;
-        min-width: 30px;
-        font-weight: bold;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 16px;
-        margin-right: 8px;
+      margin-bottom: 12px;
+      .n-icon {
+        font-size: 18px;
+        margin-right: 4px;
       }
-      .data {
-        flex: 1;
-        width: 100%;
-        padding-right: 8px;
-        .name {
-          font-size: 16px;
-          display: flex;
-          flex-direction: row;
-          align-items: center;
-          .text {
-            margin-right: 8px;
-          }
+    }
+    .history {
+      margin-bottom: 20px;
+      .delete {
+        margin-left: auto;
+        opacity: 0.6;
+        transition: opacity 0.3s;
+        cursor: pointer;
+        &:hover {
+          opacity: 1;
         }
       }
-      .n-tag {
-        pointer-events: none;
-      }
-      .hot {
+    }
+    .hot-list {
+      .hot-item {
         display: flex;
         flex-direction: row;
         align-items: center;
-        font-size: 12px;
-        opacity: 0.6;
-        .n-icon {
-          font-size: 14px;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        border-radius: 8px;
+        padding: 6px;
+        transition: background-color 0.3s;
+        cursor: pointer;
+        .num {
+          width: 30px;
+          height: 30px;
+          min-width: 30px;
+          font-weight: bold;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 16px;
+          margin-right: 8px;
         }
-      }
-      &:last-child {
-        margin-bottom: 0;
-      }
-      &:hover {
-        background-color: rgba(var(--primary), 0.12);
+        .data {
+          flex: 1;
+          width: 100%;
+          padding-right: 8px;
+          .name {
+            font-size: 16px;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            .text {
+              margin-right: 8px;
+            }
+          }
+        }
+        .n-tag {
+          pointer-events: none;
+        }
+        .hot {
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          font-size: 12px;
+          opacity: 0.6;
+          .n-icon {
+            font-size: 14px;
+          }
+        }
+        &:last-child {
+          margin-bottom: 0;
+        }
+        &:hover {
+          background-color: rgba(var(--primary), 0.12);
+        }
       }
     }
   }
-}
 </style>

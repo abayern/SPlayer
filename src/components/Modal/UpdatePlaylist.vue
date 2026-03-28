@@ -38,117 +38,117 @@
 </template>
 
 <script setup lang="ts">
-import type { CoverType } from "@/types/main";
-import type { FormInst, FormRules, SelectOption } from "naive-ui";
-import { textRule } from "@/utils/rules";
-import { useDataStore, useLocalStore } from "@/stores";
-import { debounce, isEmpty, size } from "lodash-es";
-import { updatePlaylist } from "@/api/playlist";
-import { updateUserLikePlaylist } from "@/utils/auth";
+  import type { CoverType } from "@/types/main";
+  import type { FormInst, FormRules, SelectOption } from "naive-ui";
+  import { textRule } from "@/utils/rules";
+  import { useDataStore, useLocalStore } from "@/stores";
+  import { debounce, isEmpty, size } from "lodash-es";
+  import { updatePlaylist } from "@/api/playlist";
+  import { updateUserLikePlaylist } from "@/utils/auth";
 
-// 表单类型
-interface UpdateFormType {
-  name: string;
-  desc?: string;
-  tags?: string[];
-}
-
-const props = defineProps<{
-  id: number;
-  data: CoverType;
-  /** 是否为本地歌单 */
-  isLocal?: boolean;
-}>();
-
-const emit = defineEmits<{ success: [] }>();
-
-const dataStore = useDataStore();
-const localStore = useLocalStore();
-
-// 是否为我喜欢
-const isLiked = computed(() => dataStore.userLikeData.playlists?.[0]?.id === props.id);
-
-// 表单数据
-const updateFormRef = ref<FormInst | null>(null);
-const updateFormData = ref<UpdateFormType>({
-  name: isLiked.value ? "我喜欢的音乐" : props.data.name,
-  desc: props.data.description,
-  tags: props.data.tags,
-});
-const updateFormRules: FormRules = { name: textRule };
-
-// 歌单分类数据
-const tagList = computed<SelectOption[]>(() => {
-  if (isEmpty(dataStore.catData?.cats)) return [];
-  return Object.keys(dataStore.catData?.type).map((key) => ({
-    type: "group",
-    key,
-    label: dataStore.catData?.type[key],
-    children: dataStore.catData?.cats
-      ?.filter((cat) => cat.category === Number(key))
-      .map((cat) => ({
-        label: cat.name,
-        value: cat.name,
-      })),
-  }));
-});
-
-// 检查标签
-const checkTags = (tags: string[]) => {
-  if (size(tags) > 3) {
-    updateFormData.value.tags = tags.slice(0, 3);
-    window.$message.warning("最多只能有3个标签");
+  // 表单类型
+  interface UpdateFormType {
+    name: string;
+    desc?: string;
+    tags?: string[];
   }
-};
 
-// 更新歌单
-const toUpdatePlaylist = debounce(
-  async (e: MouseEvent) => {
-    e.preventDefault();
-    // 是否输入
-    await updateFormRef.value?.validate((errors) => errors);
+  const props = defineProps<{
+    id: number;
+    data: CoverType;
+    /** 是否为本地歌单 */
+    isLocal?: boolean;
+  }>();
 
-    // 本地歌单
-    if (props.isLocal) {
-      const success = await localStore.updateLocalPlaylist(props.id, {
-        name: updateFormData.value.name,
-        description: updateFormData.value.desc,
-      });
-      if (success) {
-        emit("success");
-        window.$message.success("本地歌单编辑成功");
-      } else {
-        window.$message.error("本地歌单编辑失败");
+  const emit = defineEmits<{ success: [] }>();
+
+  const dataStore = useDataStore();
+  const localStore = useLocalStore();
+
+  // 是否为我喜欢
+  const isLiked = computed(() => dataStore.userLikeData.playlists?.[0]?.id === props.id);
+
+  // 表单数据
+  const updateFormRef = ref<FormInst | null>(null);
+  const updateFormData = ref<UpdateFormType>({
+    name: isLiked.value ? "我喜欢的音乐" : props.data.name,
+    desc: props.data.description,
+    tags: props.data.tags,
+  });
+  const updateFormRules: FormRules = { name: textRule };
+
+  // 歌单分类数据
+  const tagList = computed<SelectOption[]>(() => {
+    if (isEmpty(dataStore.catData?.cats)) return [];
+    return Object.keys(dataStore.catData?.type).map((key) => ({
+      type: "group",
+      key,
+      label: dataStore.catData?.type[key],
+      children: dataStore.catData?.cats
+        ?.filter((cat) => cat.category === Number(key))
+        .map((cat) => ({
+          label: cat.name,
+          value: cat.name,
+        })),
+    }));
+  });
+
+  // 检查标签
+  const checkTags = (tags: string[]) => {
+    if (size(tags) > 3) {
+      updateFormData.value.tags = tags.slice(0, 3);
+      window.$message.warning("最多只能有3个标签");
+    }
+  };
+
+  // 更新歌单
+  const toUpdatePlaylist = debounce(
+    async (e: MouseEvent) => {
+      e.preventDefault();
+      // 是否输入
+      await updateFormRef.value?.validate((errors) => errors);
+
+      // 本地歌单
+      if (props.isLocal) {
+        const success = await localStore.updateLocalPlaylist(props.id, {
+          name: updateFormData.value.name,
+          description: updateFormData.value.desc,
+        });
+        if (success) {
+          emit("success");
+          window.$message.success("本地歌单编辑成功");
+        } else {
+          window.$message.error("本地歌单编辑失败");
+        }
+        return;
       }
-      return;
-    }
 
-    // 在线歌单
-    const result = await updatePlaylist(
-      props.id,
-      updateFormData.value.name,
-      updateFormData.value.desc ?? "",
-      updateFormData.value.tags ?? [],
-    );
-    if (result.code === 200) {
-      emit("success");
-      window.$message.success("歌单编辑成功");
-      await updateUserLikePlaylist();
-    } else {
-      window.$message.error(result.message || "歌单编辑失败，请重试");
-    }
-  },
-  300,
-  { leading: true, trailing: false },
-);
+      // 在线歌单
+      const result = await updatePlaylist(
+        props.id,
+        updateFormData.value.name,
+        updateFormData.value.desc ?? "",
+        updateFormData.value.tags ?? [],
+      );
+      if (result.code === 200) {
+        emit("success");
+        window.$message.success("歌单编辑成功");
+        await updateUserLikePlaylist();
+      } else {
+        window.$message.error(result.message || "歌单编辑失败，请重试");
+      }
+    },
+    300,
+    { leading: true, trailing: false },
+  );
 
-onMounted(() => dataStore.getPlaylistCatList());
+  onMounted(() => dataStore.getPlaylistCatList());
 </script>
 
 <style lang="scss" scoped>
-.update-playlist {
-  .create {
-    width: 100%;
+  .update-playlist {
+    .create {
+      width: 100%;
+    }
   }
-}
 </style>

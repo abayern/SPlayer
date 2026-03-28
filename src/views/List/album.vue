@@ -52,236 +52,241 @@
       </n-empty>
     </template>
     <!-- 评论 -->
-    <ListComment v-show="currentTab === 'comments'" :id="albumId" :type="3" :height="songListHeight" />
+    <ListComment
+      v-show="currentTab === 'comments'"
+      :id="albumId"
+      :type="3"
+      :height="songListHeight"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import type { DropdownOption } from "naive-ui";
-import { songDetail } from "@/api/song";
-import { albumDetail, albumDetailDynamic } from "@/api/album";
-import { formatCoverList, formatSongsList } from "@/utils/format";
-import { renderIcon, copyData, getShareUrl } from "@/utils/helper";
-import { openBatchList } from "@/utils/modal";
-import { useDataStore } from "@/stores";
-import { toLikeAlbum } from "@/utils/auth";
-import { useListDetail } from "@/composables/List/useListDetail";
-import { useListSearch } from "@/composables/List/useListSearch";
-import { useListScroll } from "@/composables/List/useListScroll";
-import { useListActions } from "@/composables/List/useListActions";
-import { useListDataCache, type ListCacheData } from "@/composables/List/useListDataCache";
-import ListComment from "@/components/List/ListComment.vue";
+  import type { DropdownOption } from "naive-ui";
+  import { songDetail } from "@/api/song";
+  import { albumDetail, albumDetailDynamic } from "@/api/album";
+  import { formatCoverList, formatSongsList } from "@/utils/format";
+  import { renderIcon, copyData, getShareUrl } from "@/utils/helper";
+  import { openBatchList } from "@/utils/modal";
+  import { useDataStore } from "@/stores";
+  import { toLikeAlbum } from "@/utils/auth";
+  import { useListDetail } from "@/composables/List/useListDetail";
+  import { useListSearch } from "@/composables/List/useListSearch";
+  import { useListScroll } from "@/composables/List/useListScroll";
+  import { useListActions } from "@/composables/List/useListActions";
+  import { useListDataCache, type ListCacheData } from "@/composables/List/useListDataCache";
+  import ListComment from "@/components/List/ListComment.vue";
 
-const router = useRouter();
-const dataStore = useDataStore();
+  const router = useRouter();
+  const dataStore = useDataStore();
 
-const { saveCache, loadCache, checkNeedsUpdate } = useListDataCache();
+  const { saveCache, loadCache, checkNeedsUpdate } = useListDataCache();
 
-// 是否激活
-const isActivated = ref<boolean>(false);
+  // 是否激活
+  const isActivated = ref<boolean>(false);
 
-const {
-  detailData,
-  listData,
-  loading,
-  getSongListHeight,
-  resetData,
-  setDetailData,
-  setListData,
-  setLoading,
-} = useListDetail();
-const { searchValue, searchData, displayData, clearSearch, performSearch } =
-  useListSearch(listData);
-const { listScrolling, handleListScroll, resetScroll } = useListScroll();
-const { playAllSongs: playAllSongsAction } = useListActions();
+  const {
+    detailData,
+    listData,
+    loading,
+    getSongListHeight,
+    resetData,
+    setDetailData,
+    setListData,
+    setLoading,
+  } = useListDetail();
+  const { searchValue, searchData, displayData, clearSearch, performSearch } =
+    useListSearch(listData);
+  const { listScrolling, handleListScroll, resetScroll } = useListScroll();
+  const { playAllSongs: playAllSongsAction } = useListActions();
 
-// 专辑 ID
-const oldAlbumId = ref<number>(0);
-const albumId = computed<number>(() => Number(router.currentRoute.value.query.id as string));
+  // 专辑 ID
+  const oldAlbumId = ref<number>(0);
+  const albumId = computed<number>(() => Number(router.currentRoute.value.query.id as string));
 
-// 当前正在请求的专辑 ID，用于防止竞态条件
-const currentRequestId = ref<number>(0);
+  // 当前正在请求的专辑 ID，用于防止竞态条件
+  const currentRequestId = ref<number>(0);
 
-// 是否处于收藏专辑
-const isLikeAlbum = computed(() =>
-  dataStore.userLikeData.albums.some((album) => album.id === detailData.value?.id),
-);
+  // 是否处于收藏专辑
+  const isLikeAlbum = computed(() =>
+    dataStore.userLikeData.albums.some((album) => album.id === detailData.value?.id),
+  );
 
-// 列表高度
-const songListHeight = computed(() => getSongListHeight(listScrolling.value));
+  // 列表高度
+  const songListHeight = computed(() => getSongListHeight(listScrolling.value));
 
-// 当前 tab
-const currentTab = ref<"songs" | "comments">("songs");
+  // 当前 tab
+  const currentTab = ref<"songs" | "comments">("songs");
 
-// 列表配置
-const listConfig = {
-  titleType: "ellipsis" as const,
-  showCoverMask: false,
-  showPlayCount: false,
-  showArtist: true,
-  showCreator: false,
-  showCount: true,
-};
+  // 列表配置
+  const listConfig = {
+    titleType: "ellipsis" as const,
+    showCoverMask: false,
+    showPlayCount: false,
+    showArtist: true,
+    showCreator: false,
+    showCount: true,
+  };
 
-// 是否显示加载状态
-const showLoading = computed(() => listData.value.length === 0 && loading.value);
+  // 是否显示加载状态
+  const showLoading = computed(() => listData.value.length === 0 && loading.value);
 
-// 播放按钮文本
-const playButtonText = computed(() => {
-  if (showLoading.value) {
-    return "加载中...";
-  }
-  return "播放";
-});
-
-// 更多操作
-const moreOptions = computed<DropdownOption[]>(() => [
-  {
-    label: "刷新缓存",
-    key: "refresh",
-    props: {
-      onClick: () => getAlbumDetail(albumId.value, true),
-    },
-    icon: renderIcon("Refresh"),
-  },
-  {
-    label: "批量操作",
-    key: "batch",
-    props: {
-      onClick: () => {
-        openBatchList(displayData.value, false, isLikeAlbum.value ? albumId.value : undefined);
-      },
-    },
-    icon: renderIcon("Batch"),
-  },
-  {
-    label: "复制分享链接",
-    key: "copy",
-    props: {
-      onClick: () => copyData(getShareUrl("album", albumId.value), "已复制分享链接到剪贴板"),
-    },
-    icon: renderIcon("Share"),
-  },
-  {
-    label: "打开源页面",
-    key: "open",
-    props: {
-      onClick: () => {
-        window.open(`https://music.163.com/#/album?id=${albumId.value}`);
-      },
-    },
-    icon: renderIcon("Link"),
-  },
-]);
-
-// 获取专辑基础信息
-const getAlbumDetail = async (id: number, refresh: boolean = false) => {
-  if (!id) return;
-  // 设置当前请求的专辑 ID，用于防止竞态条件
-  currentRequestId.value = id;
-  setLoading(true);
-  clearSearch();
-  // 尝试读取缓存
-  if (!refresh) {
-    const cached = await loadCache("album", id);
-    if (cached) {
-      setDetailData(cached.detail);
-      setListData(cached.songs);
-      setLoading(false);
-      // 获取专辑评论等动态数据
-      fetchAlbumDynamic(id);
-      // 后台检查更新
-      backgroundCheck(id, cached);
-      return;
+  // 播放按钮文本
+  const playButtonText = computed(() => {
+    if (showLoading.value) {
+      return "加载中...";
     }
-  }
-  if (!refresh && detailData.value?.id !== id) resetData(true);
-  // 获取专辑详情
-  const detail = await albumDetail(id);
-  // 检查是否仍然是当前请求的专辑
-  if (currentRequestId.value !== id) return;
-  setDetailData(formatCoverList(detail.album)[0]);
-  // 获取专辑评论等动态数据
-  fetchAlbumDynamic(id);
-  // 获取专辑歌曲
-  const ids: number[] = detail.songs.map((song: any) => song.id as number);
-  const result = await songDetail(ids);
-  // 再次检查是否仍然是当前请求的专辑
-  if (currentRequestId.value !== id) return;
-  const songs = formatSongsList(result.songs);
-  setListData(songs);
-  // 保存缓存
-  saveCache("album", id, detailData.value!, songs);
-  setLoading(false);
-};
+    return "播放";
+  });
 
-// 后台检查更新
-const backgroundCheck = async (id: number, cached: ListCacheData) => {
-  try {
+  // 更多操作
+  const moreOptions = computed<DropdownOption[]>(() => [
+    {
+      label: "刷新缓存",
+      key: "refresh",
+      props: {
+        onClick: () => getAlbumDetail(albumId.value, true),
+      },
+      icon: renderIcon("Refresh"),
+    },
+    {
+      label: "批量操作",
+      key: "batch",
+      props: {
+        onClick: () => {
+          openBatchList(displayData.value, false, isLikeAlbum.value ? albumId.value : undefined);
+        },
+      },
+      icon: renderIcon("Batch"),
+    },
+    {
+      label: "复制分享链接",
+      key: "copy",
+      props: {
+        onClick: () => copyData(getShareUrl("album", albumId.value), "已复制分享链接到剪贴板"),
+      },
+      icon: renderIcon("Share"),
+    },
+    {
+      label: "打开源页面",
+      key: "open",
+      props: {
+        onClick: () => {
+          window.open(`https://music.163.com/#/album?id=${albumId.value}`);
+        },
+      },
+      icon: renderIcon("Link"),
+    },
+  ]);
+
+  // 获取专辑基础信息
+  const getAlbumDetail = async (id: number, refresh: boolean = false) => {
+    if (!id) return;
+    // 设置当前请求的专辑 ID，用于防止竞态条件
+    currentRequestId.value = id;
+    setLoading(true);
+    clearSearch();
+    // 尝试读取缓存
+    if (!refresh) {
+      const cached = await loadCache("album", id);
+      if (cached) {
+        setDetailData(cached.detail);
+        setListData(cached.songs);
+        setLoading(false);
+        // 获取专辑评论等动态数据
+        fetchAlbumDynamic(id);
+        // 后台检查更新
+        backgroundCheck(id, cached);
+        return;
+      }
+    }
+    if (!refresh && detailData.value?.id !== id) resetData(true);
+    // 获取专辑详情
     const detail = await albumDetail(id);
     // 检查是否仍然是当前请求的专辑
     if (currentRequestId.value !== id) return;
-    const latestDetail = formatCoverList(detail.album)[0];
-    if (checkNeedsUpdate(cached, latestDetail)) {
-      console.log("Album cache expired, refreshing...");
-      getAlbumDetail(id, true);
+    setDetailData(formatCoverList(detail.album)[0]);
+    // 获取专辑评论等动态数据
+    fetchAlbumDynamic(id);
+    // 获取专辑歌曲
+    const ids: number[] = detail.songs.map((song: any) => song.id as number);
+    const result = await songDetail(ids);
+    // 再次检查是否仍然是当前请求的专辑
+    if (currentRequestId.value !== id) return;
+    const songs = formatSongsList(result.songs);
+    setListData(songs);
+    // 保存缓存
+    saveCache("album", id, detailData.value!, songs);
+    setLoading(false);
+  };
+
+  // 后台检查更新
+  const backgroundCheck = async (id: number, cached: ListCacheData) => {
+    try {
+      const detail = await albumDetail(id);
+      // 检查是否仍然是当前请求的专辑
+      if (currentRequestId.value !== id) return;
+      const latestDetail = formatCoverList(detail.album)[0];
+      if (checkNeedsUpdate(cached, latestDetail)) {
+        console.log("Album cache expired, refreshing...");
+        getAlbumDetail(id, true);
+      }
+    } catch (e) {
+      console.error("Album background check failed", e);
     }
-  } catch (e) {
-    console.error("Album background check failed", e);
-  }
-};
+  };
 
-// 处理搜索更新
-const handleSearchUpdate = (val: string) => {
-  searchValue.value = val;
-  performSearch(val);
-};
+  // 处理搜索更新
+  const handleSearchUpdate = (val: string) => {
+    searchValue.value = val;
+    performSearch(val);
+  };
 
-// 处理 tab 切换
-const handleTabChange = (value: "songs" | "comments") => {
-  currentTab.value = value;
-};
+  // 处理 tab 切换
+  const handleTabChange = (value: "songs" | "comments") => {
+    currentTab.value = value;
+  };
 
-// 获取专辑动态信息（评论数等）
-const fetchAlbumDynamic = async (id: number) => {
-  try {
-    const result = await albumDetailDynamic(id);
-    if (!detailData.value || detailData.value.id !== id) return;
-    if (typeof result.commentCount === "number") {
-      detailData.value.commentCount = result.commentCount;
+  // 获取专辑动态信息（评论数等）
+  const fetchAlbumDynamic = async (id: number) => {
+    try {
+      const result = await albumDetailDynamic(id);
+      if (!detailData.value || detailData.value.id !== id) return;
+      if (typeof result.commentCount === "number") {
+        detailData.value.commentCount = result.commentCount;
+      }
+    } catch {
+      // 忽略错误
     }
-  } catch {
-    // 忽略错误
-  }
-};
+  };
 
-// 播放全部歌曲
-const playAllSongs = useDebounceFn(() => {
-  if (!detailData.value || !displayData.value?.length) return;
-  playAllSongsAction(displayData.value);
-}, 300);
+  // 播放全部歌曲
+  const playAllSongs = useDebounceFn(() => {
+    if (!detailData.value || !displayData.value?.length) return;
+    playAllSongsAction(displayData.value);
+  }, 300);
 
-onBeforeRouteUpdate((to) => {
-  clearSearch();
-  currentTab.value = "songs";
-  const id = Number(to.query.id as string);
-  if (id) getAlbumDetail(id);
-});
+  onBeforeRouteUpdate((to) => {
+    clearSearch();
+    currentTab.value = "songs";
+    const id = Number(to.query.id as string);
+    if (id) getAlbumDetail(id);
+  });
 
-onActivated(() => {
-  if (!isActivated.value) {
-    isActivated.value = true;
-  } else {
-    oldAlbumId.value = albumId.value;
-    getAlbumDetail(albumId.value, false);
-  }
-});
+  onActivated(() => {
+    if (!isActivated.value) {
+      isActivated.value = true;
+    } else {
+      oldAlbumId.value = albumId.value;
+      getAlbumDetail(albumId.value, false);
+    }
+  });
 
-onDeactivated(() => {
-  resetScroll();
-});
+  onDeactivated(() => {
+    resetScroll();
+  });
 
-onMounted(() => {
-  getAlbumDetail(albumId.value);
-});
+  onMounted(() => {
+    getAlbumDetail(albumId.value);
+  });
 </script>

@@ -48,75 +48,75 @@
 </template>
 
 <script setup lang="ts">
-import type { UpdateInfoType } from "@/types/main";
-import { useStatusStore } from "@/stores";
-import packageJson from "@/../package.json";
+  import type { UpdateInfoType } from "@/types/main";
+  import { useStatusStore } from "@/stores";
+  import packageJson from "@/../package.json";
 
-const props = defineProps<{ data: UpdateInfoType }>();
+  const props = defineProps<{ data: UpdateInfoType }>();
 
-const emit = defineEmits<{ close: [] }>();
+  const emit = defineEmits<{ close: [] }>();
 
-const statusStore = useStatusStore();
+  const statusStore = useStatusStore();
 
-// 检测是否为预发布版本（alpha/beta/rc 等）
-const isPrerelease = computed(() => {
-  const version = props.data?.version || "";
-  return /-(alpha|beta|rc|dev|canary|nightly)/i.test(version);
-});
+  // 检测是否为预发布版本（alpha/beta/rc 等）
+  const isPrerelease = computed(() => {
+    const version = props.data?.version || "";
+    return /-(alpha|beta|rc|dev|canary|nightly)/i.test(version);
+  });
 
-// 处理markdown中的链接点击
-const handleMarkdownClick = (event: MouseEvent) => {
-  const target = event.target as HTMLElement;
-  // 从事件目标向上遍历，查找最近的 <a> 标签
-  const anchor = target.closest("a");
-  if (anchor?.href) {
-    event.preventDefault();
-    window.open(anchor.href, "_blank");
-  }
-};
+  // 处理markdown中的链接点击
+  const handleMarkdownClick = (event: MouseEvent) => {
+    const target = event.target as HTMLElement;
+    // 从事件目标向上遍历，查找最近的 <a> 标签
+    const anchor = target.closest("a");
+    if (anchor?.href) {
+      event.preventDefault();
+      window.open(anchor.href, "_blank");
+    }
+  };
 
-// 开始下载更新
-const startDownload = () => {
-  window.electron.ipcRenderer.send("start-download-update");
-};
+  // 开始下载更新
+  const startDownload = () => {
+    window.electron.ipcRenderer.send("start-download-update");
+  };
 
-// 安装更新
-const doInstall = () => {
-  window.electron.ipcRenderer.send("install-update");
-};
+  // 安装更新
+  const doInstall = () => {
+    window.electron.ipcRenderer.send("install-update");
+  };
 
-// 前往下载
-const goDownload = () => {
-  emit("close");
-  window.open("https://splayer.imsyy.top/download.html", "_blank");
-};
+  // 前往下载
+  const goDownload = () => {
+    emit("close");
+    window.open("https://splayer.imsyy.top/download.html", "_blank");
+  };
 </script>
 
 <style lang="scss" scoped>
-.update-app {
-  .version {
-    margin-bottom: 20px;
+  .update-app {
+    .version {
+      margin-bottom: 20px;
 
-    .n-tag {
-      border-radius: 6px;
+      .n-tag {
+        border-radius: 6px;
+      }
+
+      .time {
+        margin-left: auto;
+        font-size: 13px;
+      }
     }
 
-    .time {
-      margin-left: auto;
-      font-size: 13px;
+    .menu {
+      margin-top: 20px;
+    }
+
+    .prerelease-warning {
+      margin-bottom: 12px;
+    }
+
+    .markdown-body {
+      margin-top: 0 !important;
     }
   }
-
-  .menu {
-    margin-top: 20px;
-  }
-
-  .prerelease-warning {
-    margin-bottom: 12px;
-  }
-
-  .markdown-body {
-    margin-top: 0 !important;
-  }
-}
 </style>

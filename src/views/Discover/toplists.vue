@@ -52,79 +52,79 @@
 </template>
 
 <script setup lang="ts">
-import { topPlaylist } from "@/api/playlist";
-import type { CoverType } from "@/types/main";
-import { formatCoverList } from "@/utils/format";
-import { useSettingStore } from "@/stores";
+  import { topPlaylist } from "@/api/playlist";
+  import type { CoverType } from "@/types/main";
+  import { formatCoverList } from "@/utils/format";
+  import { useSettingStore } from "@/stores";
 
-const router = useRouter();
-const settingStore = useSettingStore();
+  const router = useRouter();
+  const settingStore = useSettingStore();
 
-// 排行榜数据
-const topListData = ref<{
-  official: CoverType[];
-  selected: CoverType[];
-}>({
-  official: [],
-  selected: [],
-});
+  // 排行榜数据
+  const topListData = ref<{
+    official: CoverType[];
+    selected: CoverType[];
+  }>({
+    official: [],
+    selected: [],
+  });
 
-// 获取排行榜数据
-const getTopPlaylistData = async () => {
-  const result = await topPlaylist();
-  // 区分榜单
-  const official = formatCoverList(result.list?.filter((v: any) => v.ToplistType !== undefined));
-  const selected = formatCoverList(result.list?.filter((v: any) => v.ToplistType === undefined));
-  topListData.value = { official, selected };
-};
+  // 获取排行榜数据
+  const getTopPlaylistData = async () => {
+    const result = await topPlaylist();
+    // 区分榜单
+    const official = formatCoverList(result.list?.filter((v: any) => v.ToplistType !== undefined));
+    const selected = formatCoverList(result.list?.filter((v: any) => v.ToplistType === undefined));
+    topListData.value = { official, selected };
+  };
 
-onMounted(getTopPlaylistData);
+  onMounted(getTopPlaylistData);
 </script>
 
 <style lang="scss" scoped>
-.discover-toplists {
-  .song-item {
-    .desc {
-      &::before {
-        content: "-";
-        margin: 0 4px;
+  .discover-toplists {
+    .song-item {
+      .desc {
+        &::before {
+          content: "-";
+          margin: 0 4px;
+        }
       }
     }
-  }
-  .loading {
-    height: 160px;
-    border-radius: 12px;
-    cursor: pointer;
-    :deep(.n-card__content) {
-      display: flex;
-      height: 100%;
-      padding: 16px;
-    }
-    .cover {
-      height: 100%;
-      width: auto;
-      border-radius: 8px;
-      aspect-ratio: 1/1;
-      margin-right: 20px;
-    }
-    .desc {
-      display: flex;
-      flex-direction: column;
-      justify-content: space-evenly;
-      width: 100%;
-      :deep(.n-skeleton) {
-        height: 20px;
-      }
-    }
-    &.no-cover {
+    .loading {
+      height: 160px;
+      border-radius: 12px;
+      cursor: pointer;
       :deep(.n-card__content) {
-        padding: 12px;
+        display: flex;
+        height: 100%;
+        padding: 16px;
+      }
+      .cover {
+        height: 100%;
+        width: auto;
+        border-radius: 8px;
+        aspect-ratio: 1/1;
+        margin-right: 20px;
       }
       .desc {
-        justify-content: center;
-        gap: 12px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-evenly;
+        width: 100%;
+        :deep(.n-skeleton) {
+          height: 20px;
+        }
+      }
+      &.no-cover {
+        :deep(.n-card__content) {
+          padding: 12px;
+        }
+        .desc {
+          justify-content: center;
+          gap: 12px;
+        }
       }
     }
   }
-}
 </style>

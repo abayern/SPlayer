@@ -262,223 +262,223 @@
 </template>
 
 <script setup lang="ts">
-import { useMusicStore, useSettingStore, useStatusStore, useDataStore } from "@/stores";
-import { isEmpty } from "lodash-es";
-import themeColor from "@/assets/data/themeColor.json";
-import { getCoverColor, getCoverColorData } from "@/utils/color";
-import { useBlobURLManager } from "@/core/resource/BlobURLManager";
-import type { ThemeColorType } from "@/types/color";
+  import { useMusicStore, useSettingStore, useStatusStore, useDataStore } from "@/stores";
+  import { isEmpty } from "lodash-es";
+  import themeColor from "@/assets/data/themeColor.json";
+  import { getCoverColor, getCoverColorData } from "@/utils/color";
+  import { useBlobURLManager } from "@/core/resource/BlobURLManager";
+  import type { ThemeColorType } from "@/types/color";
 
-const musicStore = useMusicStore();
-const settingStore = useSettingStore();
-const statusStore = useStatusStore();
-const dataStore = useDataStore();
-const blobURLManager = useBlobURLManager();
+  const musicStore = useMusicStore();
+  const settingStore = useSettingStore();
+  const statusStore = useStatusStore();
+  const dataStore = useDataStore();
+  const blobURLManager = useBlobURLManager();
 
-// 文件输入引用
-const fileInputRef = ref<HTMLInputElement | null>(null);
+  // 文件输入引用
+  const fileInputRef = ref<HTMLInputElement | null>(null);
 
-// 是否为自定义背景模式
-const isCustomBackground = computed(() => statusStore.isCustomBackground);
+  // 是否为自定义背景模式
+  const isCustomBackground = computed(() => statusStore.isCustomBackground);
 
-// 主题颜色变体选项
-const variantOptions = [
-  { label: "主色", value: "primary" },
-  { label: "次色", value: "secondary" },
-  { label: "第三色", value: "tertiary" },
-  { label: "中性色", value: "neutral" },
-  { label: "中性变体", value: "neutralVariant" },
-  { label: "错误色", value: "error" },
-];
+  // 主题颜色变体选项
+  const variantOptions = [
+    { label: "主色", value: "primary" },
+    { label: "次色", value: "secondary" },
+    { label: "第三色", value: "tertiary" },
+    { label: "中性色", value: "neutral" },
+    { label: "中性变体", value: "neutralVariant" },
+    { label: "错误色", value: "error" },
+  ];
 
-// 主题颜色数据
-const themeColors = themeColor as Record<string, { label: string; name: string; color: string }>;
+  // 主题颜色数据
+  const themeColors = themeColor as Record<string, { label: string; name: string; color: string }>;
 
-// 选择颜色
-const selectColor = (key: ThemeColorType) => {
-  settingStore.themeColorType = key;
-};
+  // 选择颜色
+  const selectColor = (key: ThemeColorType) => {
+    settingStore.themeColorType = key;
+  };
 
-// 全局着色更改
-const themeGlobalColorChange = (val: boolean) => {
-  if (val) getCoverColor(musicStore.songCover);
-};
+  // 全局着色更改
+  const themeGlobalColorChange = (val: boolean) => {
+    if (val) getCoverColor(musicStore.songCover);
+  };
 
-// 选择背景图
-const selectBackgroundImage = () => {
-  fileInputRef.value?.click();
-};
+  // 选择背景图
+  const selectBackgroundImage = () => {
+    fileInputRef.value?.click();
+  };
 
-// 处理文件选择
-const handleFileSelect = async (event: Event) => {
-  const input = event.target as HTMLInputElement;
-  const file = input.files?.[0];
-  if (!file) return;
-  // 检查文件大小（限制 50MB）
-  const maxSize = 50 * 1024 * 1024;
-  if (file.size > maxSize) {
-    window.$message.error("文件大小不能超过 50MB");
-    input.value = "";
-    return;
-  }
-  // 检查文件类型
-  const isVideo = file.type.startsWith("video/");
-  const isImage = file.type.startsWith("image/");
-  if (!isImage && !isVideo) {
-    window.$message.error("请选择图片或视频文件");
-    input.value = "";
-    return;
-  }
-  try {
-    await dataStore.saveBackgroundImage(file);
-    // 生成 Blob URL
-    const arrayBuffer = await file.arrayBuffer();
-    // 强制清理旧的 URL，确保生成新的
-    blobURLManager.revokeBlobURL("background-image");
-    const url = blobURLManager.createBlobURL(arrayBuffer, file.type, "background-image");
-
-    if (isImage) {
-      // 提取图片主色
-      const image = new Image();
-      image.src = url;
-      await new Promise((resolve) => (image.onload = resolve));
-      const colorData = getCoverColorData(image);
-      image.remove();
-      // 保存提取的主色
-      if (colorData?.main) {
-        const { r, g, b } = colorData.main;
-        const hex = `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
-        statusStore.backgroundConfig.themeColor = hex;
-      }
-      statusStore.themeBackgroundMode = "image";
-    } else {
-      statusStore.themeBackgroundMode = "video";
+  // 处理文件选择
+  const handleFileSelect = async (event: Event) => {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    // 检查文件大小（限制 50MB）
+    const maxSize = 50 * 1024 * 1024;
+    if (file.size > maxSize) {
+      window.$message.error("文件大小不能超过 50MB");
+      input.value = "";
+      return;
     }
+    // 检查文件类型
+    const isVideo = file.type.startsWith("video/");
+    const isImage = file.type.startsWith("image/");
+    if (!isImage && !isVideo) {
+      window.$message.error("请选择图片或视频文件");
+      input.value = "";
+      return;
+    }
+    try {
+      await dataStore.saveBackgroundImage(file);
+      // 生成 Blob URL
+      const arrayBuffer = await file.arrayBuffer();
+      // 强制清理旧的 URL，确保生成新的
+      blobURLManager.revokeBlobURL("background-image");
+      const url = blobURLManager.createBlobURL(arrayBuffer, file.type, "background-image");
 
-    // 切换模式
-    statusStore.backgroundImageUrl = url;
-    settingStore.themeFollowCover = false;
-    settingStore.themeGlobalColor = true;
-    window.$message.success("背景设置成功");
-  } catch (error) {
-    console.error("Error setting background:", error);
-    window.$message.error("背景设置失败");
-  }
-  input.value = "";
-};
+      if (isImage) {
+        // 提取图片主色
+        const image = new Image();
+        image.src = url;
+        await new Promise((resolve) => (image.onload = resolve));
+        const colorData = getCoverColorData(image);
+        image.remove();
+        // 保存提取的主色
+        if (colorData?.main) {
+          const { r, g, b } = colorData.main;
+          const hex = `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
+          statusStore.backgroundConfig.themeColor = hex;
+        }
+        statusStore.themeBackgroundMode = "image";
+      } else {
+        statusStore.themeBackgroundMode = "video";
+      }
 
-// 清除背景图
-const clearBackgroundImage = async () => {
-  try {
-    await dataStore.clearBackgroundImage();
-    blobURLManager.revokeBlobURL("background-image");
-    statusStore.backgroundImageUrl = null;
-    statusStore.themeBackgroundMode = "color";
-    statusStore.backgroundConfig.themeColor = null;
-    window.$message.success("已恢复颜色模式");
-  } catch (error) {
-    console.error("Error clearing background image:", error);
-    window.$message.error("操作失败");
-  }
-};
+      // 切换模式
+      statusStore.backgroundImageUrl = url;
+      settingStore.themeFollowCover = false;
+      settingStore.themeGlobalColor = true;
+      window.$message.success("背景设置成功");
+    } catch (error) {
+      console.error("Error setting background:", error);
+      window.$message.error("背景设置失败");
+    }
+    input.value = "";
+  };
+
+  // 清除背景图
+  const clearBackgroundImage = async () => {
+    try {
+      await dataStore.clearBackgroundImage();
+      blobURLManager.revokeBlobURL("background-image");
+      statusStore.backgroundImageUrl = null;
+      statusStore.themeBackgroundMode = "color";
+      statusStore.backgroundConfig.themeColor = null;
+      window.$message.success("已恢复颜色模式");
+    } catch (error) {
+      console.error("Error clearing background image:", error);
+      window.$message.error("操作失败");
+    }
+  };
 </script>
 
 <style lang="scss" scoped>
-.config-section {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  .set-item {
-    border-radius: 8px;
-    :deep(.n-card__content) {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 8px 12px;
-    }
-    .label {
-      display: flex;
-      flex-direction: column;
-      .name {
-        font-size: 14px;
-      }
-      .tip {
-        font-size: 12px;
-        margin-top: 2px;
-      }
-    }
-    .bg-actions {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-  }
-}
-.color-section {
-  transition: opacity 0.3s ease;
-  &.disabled {
-    opacity: 0.4;
-    pointer-events: none;
-  }
-  .section-title {
-    display: block;
-    font-size: 13px;
-    margin-bottom: 12px;
-  }
-  .color-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+  .config-section {
+    display: flex;
+    flex-direction: column;
     gap: 12px;
-    .color-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 6px;
-      padding: 8px;
+    .set-item {
       border-radius: 8px;
-      cursor: pointer;
-      transition:
-        background-color 0.3s,
-        box-shadow 0.3s;
-      &:hover {
-        background-color: rgba(var(--primary), 0.08);
-      }
-      &.active {
-        background-color: rgba(var(--primary), 0.12);
-        .color-circle {
-          box-shadow: 0 0 0 3px rgba(var(--primary), 0.3);
-        }
-      }
-      .color-circle {
-        position: relative;
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        background-color: var(--color);
+      :deep(.n-card__content) {
         display: flex;
         align-items: center;
-        justify-content: center;
-        transition: background-color 0.3s;
-        color: #fff;
-        &.custom-trigger {
-          cursor: pointer;
-          overflow: hidden;
-          .color-picker-overlay {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0;
-            cursor: pointer;
-          }
+        justify-content: space-between;
+        padding: 8px 12px;
+      }
+      .label {
+        display: flex;
+        flex-direction: column;
+        .name {
+          font-size: 14px;
+        }
+        .tip {
+          font-size: 12px;
+          margin-top: 2px;
         }
       }
-      .color-name {
-        font-size: 12px;
-        text-align: center;
+      .bg-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
       }
     }
   }
-}
+  .color-section {
+    transition: opacity 0.3s ease;
+    &.disabled {
+      opacity: 0.4;
+      pointer-events: none;
+    }
+    .section-title {
+      display: block;
+      font-size: 13px;
+      margin-bottom: 12px;
+    }
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+      gap: 12px;
+      .color-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        padding: 8px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition:
+          background-color 0.3s,
+          box-shadow 0.3s;
+        &:hover {
+          background-color: rgba(var(--primary), 0.08);
+        }
+        &.active {
+          background-color: rgba(var(--primary), 0.12);
+          .color-circle {
+            box-shadow: 0 0 0 3px rgba(var(--primary), 0.3);
+          }
+        }
+        .color-circle {
+          position: relative;
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          background-color: var(--color);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: background-color 0.3s;
+          color: #fff;
+          &.custom-trigger {
+            cursor: pointer;
+            overflow: hidden;
+            .color-picker-overlay {
+              position: absolute;
+              left: 0;
+              top: 0;
+              width: 100%;
+              height: 100%;
+              opacity: 0;
+              cursor: pointer;
+            }
+          }
+        }
+        .color-name {
+          font-size: 12px;
+          text-align: center;
+        }
+      }
+    }
+  }
 </style>

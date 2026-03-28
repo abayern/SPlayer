@@ -50,146 +50,153 @@
 </template>
 
 <script setup lang="ts">
-import { useMusicStore } from "@/stores";
-import { copyData } from "@/utils/helper";
+  import { useMusicStore } from "@/stores";
+  import { copyData } from "@/utils/helper";
 
-const props = defineProps<{ onClose: () => void }>();
+  const props = defineProps<{ onClose: () => void }>();
 
-const musicStore = useMusicStore();
+  const musicStore = useMusicStore();
 
-const selectedFilters = ref<string[]>(["translation", "romaji", "emptyLine", "songName", "artist"]);
-const selectedLines = ref<number[]>([]);
+  const selectedFilters = ref<string[]>([
+    "translation",
+    "romaji",
+    "emptyLine",
+    "songName",
+    "artist",
+  ]);
+  const selectedLines = ref<number[]>([]);
 
-const rawLyrics = computed(() => {
-  const { songLyric } = musicStore;
-  return songLyric.yrcData?.length ? songLyric.yrcData : songLyric.lrcData;
-});
-
-const displayLyrics = computed(() => {
-  return rawLyrics.value.map((line, index) => {
-    const text = line.words?.map((w) => w.word).join("") || "";
-    const translation = line.translatedLyric || "";
-    const romaji = line.romanLyric || line.words?.map((w) => w.romanWord).join("") || "";
-    return {
-      index,
-      text,
-      translation,
-      romaji,
-    };
+  const rawLyrics = computed(() => {
+    const { songLyric } = musicStore;
+    return songLyric.yrcData?.length ? songLyric.yrcData : songLyric.lrcData;
   });
-});
 
-const displaySuffix = computed(() => {
-  const showSongName = selectedFilters.value.includes("songName");
-  const showArtist = selectedFilters.value.includes("artist");
+  const displayLyrics = computed(() => {
+    return rawLyrics.value.map((line, index) => {
+      const text = line.words?.map((w) => w.word).join("") || "";
+      const translation = line.translatedLyric || "";
+      const romaji = line.romanLyric || line.words?.map((w) => w.romanWord).join("") || "";
+      return {
+        index,
+        text,
+        translation,
+        romaji,
+      };
+    });
+  });
 
-  if (!showSongName && !showArtist) return "";
+  const displaySuffix = computed(() => {
+    const showSongName = selectedFilters.value.includes("songName");
+    const showArtist = selectedFilters.value.includes("artist");
 
-  const songName = musicStore.playSong.name;
-  const artistName = Array.isArray(musicStore.playSong.artists)
-    ? musicStore.playSong.artists.map((ar) => ar.name).join("/")
-    : musicStore.playSong.artists;
+    if (!showSongName && !showArtist) return "";
 
-  if (showSongName && showArtist) {
-    return `——《${songName}》 - ${artistName}`;
-  } else if (showSongName) {
-    return `——《${songName}》`;
-  } else if (showArtist) {
-    return `—— ${artistName}`;
-  }
-  return "";
-});
+    const songName = musicStore.playSong.name;
+    const artistName = Array.isArray(musicStore.playSong.artists)
+      ? musicStore.playSong.artists.map((ar) => ar.name).join("/")
+      : musicStore.playSong.artists;
 
-const showTranslation = computed(() => selectedFilters.value.includes("translation"));
-const showRomaji = computed(() => selectedFilters.value.includes("romaji"));
+    if (showSongName && showArtist) {
+      return `——《${songName}》 - ${artistName}`;
+    } else if (showSongName) {
+      return `——《${songName}》`;
+    } else if (showArtist) {
+      return `—— ${artistName}`;
+    }
+    return "";
+  });
 
-const isAllSelected = computed(
-  () => displayLyrics.value.length > 0 && selectedLines.value.length === displayLyrics.value.length,
-);
+  const showTranslation = computed(() => selectedFilters.value.includes("translation"));
+  const showRomaji = computed(() => selectedFilters.value.includes("romaji"));
 
-const selectAll = () => {
-  if (selectedLines.value.length === displayLyrics.value.length) {
-    selectedLines.value = [];
-  } else {
-    selectedLines.value = displayLyrics.value.map((l) => l.index);
-  }
-};
+  const isAllSelected = computed(
+    () =>
+      displayLyrics.value.length > 0 && selectedLines.value.length === displayLyrics.value.length,
+  );
 
-/**
- * 复制歌词
- */
-const handleCopy = async () => {
-  const lineSeparator = selectedFilters.value.includes("emptyLine") ? "\n\n" : "\n";
+  const selectAll = () => {
+    if (selectedLines.value.length === displayLyrics.value.length) {
+      selectedLines.value = [];
+    } else {
+      selectedLines.value = displayLyrics.value.map((l) => l.index);
+    }
+  };
 
-  let linesToCopy = displayLyrics.value
-    .filter((l) => selectedLines.value.includes(l.index))
-    .map((l) => {
-      const parts: string[] = [];
-      if (l.text) parts.push(l.text);
-      if (showTranslation.value && l.translation) parts.push(l.translation);
-      if (showRomaji.value && l.romaji) parts.push(l.romaji);
-      return parts.join("\n");
-    })
-    .filter((s) => s)
-    .join(lineSeparator);
+  /**
+   * 复制歌词
+   */
+  const handleCopy = async () => {
+    const lineSeparator = selectedFilters.value.includes("emptyLine") ? "\n\n" : "\n";
 
-  if (displaySuffix.value) linesToCopy += `${lineSeparator}${displaySuffix.value}`;
+    let linesToCopy = displayLyrics.value
+      .filter((l) => selectedLines.value.includes(l.index))
+      .map((l) => {
+        const parts: string[] = [];
+        if (l.text) parts.push(l.text);
+        if (showTranslation.value && l.translation) parts.push(l.translation);
+        if (showRomaji.value && l.romaji) parts.push(l.romaji);
+        return parts.join("\n");
+      })
+      .filter((s) => s)
+      .join(lineSeparator);
 
-  if (linesToCopy) {
-    await copyData(linesToCopy);
-    props.onClose();
-  } else {
-    window.$message.warning("没有可复制的内容");
-  }
-};
+    if (displaySuffix.value) linesToCopy += `${lineSeparator}${displaySuffix.value}`;
+
+    if (linesToCopy) {
+      await copyData(linesToCopy);
+      props.onClose();
+    } else {
+      window.$message.warning("没有可复制的内容");
+    }
+  };
 </script>
 
 <style lang="scss" scoped>
-.copy-lyrics {
-  display: flex;
-  flex-direction: column;
-  height: 60vh;
-  width: 100%;
-}
-
-.lyrics-list {
-  flex: 1;
-
-  .lyric-checkbox {
+  .copy-lyrics {
+    display: flex;
+    flex-direction: column;
+    height: 60vh;
     width: 100%;
   }
 
-  .lyric-content {
-    font-size: 14px;
-    line-height: 1.6;
+  .lyrics-list {
+    flex: 1;
 
-    .translation {
-      font-size: 12px;
+    .lyric-checkbox {
+      width: 100%;
     }
 
-    .romaji {
-      font-size: 12px;
-      font-style: italic;
+    .lyric-content {
+      font-size: 14px;
+      line-height: 1.6;
+
+      .translation {
+        font-size: 12px;
+      }
+
+      .romaji {
+        font-size: 12px;
+        font-style: italic;
+      }
     }
   }
-}
 
-.n-divider {
-  margin: 16px 0;
-}
-
-.footer {
-  .footer-title {
-    font-size: 13px;
-    margin-bottom: 4px;
+  .n-divider {
+    margin: 16px 0;
   }
 
-  .footer-options {
-    margin-bottom: 8px;
-  }
+  .footer {
+    .footer-title {
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
 
-  .footer-actions {
-    gap: 8px;
+    .footer-options {
+      margin-bottom: 8px;
+    }
+
+    .footer-actions {
+      gap: 8px;
+    }
   }
-}
 </style>

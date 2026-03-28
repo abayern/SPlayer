@@ -163,103 +163,103 @@
 </template>
 
 <script setup lang="ts">
-import type { SongType, MetaData } from "@/types/main";
-import { songDetail } from "@/api/song";
-import { formatSongsList } from "@/utils/format";
-import { copyData, getShareUrl } from "@/utils/helper";
-import { msToTime, formatTimestamp } from "@/utils/time";
+  import type { SongType, MetaData } from "@/types/main";
+  import { songDetail } from "@/api/song";
+  import { formatSongsList } from "@/utils/format";
+  import { copyData, getShareUrl } from "@/utils/helper";
+  import { msToTime, formatTimestamp } from "@/utils/time";
 
-const props = defineProps<{ songId: number; onClose: () => void }>();
+  const props = defineProps<{ songId: number; onClose: () => void }>();
 
-const loading = ref(true);
-const songInfo = ref<SongType | null>(null);
+  const loading = ref(true);
+  const songInfo = ref<SongType | null>(null);
 
-const artistsList = computed<MetaData[]>(() => {
-  if (!songInfo.value) return [];
-  if (Array.isArray(songInfo.value.artists)) return songInfo.value.artists;
-  if (typeof songInfo.value.artists === "string") {
-    return [{ name: songInfo.value.artists, id: 0 }];
-  }
-  return [];
-});
-
-const albumData = computed<MetaData | null>(() => {
-  if (!songInfo.value) return null;
-  if (typeof songInfo.value.album === "object") return songInfo.value.album;
-  if (typeof songInfo.value.album === "string") {
-    return { name: songInfo.value.album, id: 0 };
-  }
-  return null;
-});
-
-const duration = computed(() => {
-  return songInfo.value?.duration ? msToTime(songInfo.value.duration) : "";
-});
-
-const publishTime = computed(() => {
-  const createTime = songInfo.value?.createTime;
-  return typeof createTime === "number" ? formatTimestamp(createTime, "YYYY-MM-DD", true) : "";
-});
-
-const songLink = computed(() => {
-  return songInfo.value?.id ? getShareUrl("song", songInfo.value.id) : "";
-});
-
-// 获取歌曲详情
-const fetchSongDetail = async () => {
-  try {
-    loading.value = true;
-    const result = await songDetail(props.songId);
-    const songs = formatSongsList(result?.songs);
-    if (!songs || songs.length === 0) {
-      window.$message.error("获取歌曲详情失败");
-      return;
+  const artistsList = computed<MetaData[]>(() => {
+    if (!songInfo.value) return [];
+    if (Array.isArray(songInfo.value.artists)) return songInfo.value.artists;
+    if (typeof songInfo.value.artists === "string") {
+      return [{ name: songInfo.value.artists, id: 0 }];
     }
-    songInfo.value = songs[0];
-  } catch (error) {
-    console.error("获取歌曲详情失败：", error);
-    window.$message.error("获取歌曲详情失败");
-  } finally {
-    loading.value = false;
-  }
-};
+    return [];
+  });
 
-const copyText = (text: string | undefined, label: string) => {
-  if (text) copyData(text, `已复制${label}`);
-};
+  const albumData = computed<MetaData | null>(() => {
+    if (!songInfo.value) return null;
+    if (typeof songInfo.value.album === "object") return songInfo.value.album;
+    if (typeof songInfo.value.album === "string") {
+      return { name: songInfo.value.album, id: 0 };
+    }
+    return null;
+  });
 
-// 复制全部
-const handleCopyAll = () => {
-  if (!songInfo.value) return;
-  const lines = [
-    `歌曲：${songInfo.value.name}`,
-    songInfo.value.alia ? `别名：${songInfo.value.alia}` : "",
-    `歌手：${artistsList.value.map((a) => `${a.name}${a.id ? ` (ID: ${a.id})` : ""}`).join(" / ")}`,
-    albumData.value
-      ? `专辑：${albumData.value.name}${albumData.value.id ? ` (ID: ${albumData.value.id})` : ""}`
-      : "",
-    `歌曲ID：${songInfo.value.id}`,
-    duration.value ? `时长：${duration.value}` : "",
-    publishTime.value ? `发布时间：${publishTime.value}` : "",
-    `链接：${songLink.value}`,
-  ].filter((line) => line);
+  const duration = computed(() => {
+    return songInfo.value?.duration ? msToTime(songInfo.value.duration) : "";
+  });
 
-  copyData(lines, "已复制全部信息");
-};
+  const publishTime = computed(() => {
+    const createTime = songInfo.value?.createTime;
+    return typeof createTime === "number" ? formatTimestamp(createTime, "YYYY-MM-DD", true) : "";
+  });
 
-onMounted(() => {
-  fetchSongDetail();
-});
+  const songLink = computed(() => {
+    return songInfo.value?.id ? getShareUrl("song", songInfo.value.id) : "";
+  });
+
+  // 获取歌曲详情
+  const fetchSongDetail = async () => {
+    try {
+      loading.value = true;
+      const result = await songDetail(props.songId);
+      const songs = formatSongsList(result?.songs);
+      if (!songs || songs.length === 0) {
+        window.$message.error("获取歌曲详情失败");
+        return;
+      }
+      songInfo.value = songs[0];
+    } catch (error) {
+      console.error("获取歌曲详情失败：", error);
+      window.$message.error("获取歌曲详情失败");
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const copyText = (text: string | undefined, label: string) => {
+    if (text) copyData(text, `已复制${label}`);
+  };
+
+  // 复制全部
+  const handleCopyAll = () => {
+    if (!songInfo.value) return;
+    const lines = [
+      `歌曲：${songInfo.value.name}`,
+      songInfo.value.alia ? `别名：${songInfo.value.alia}` : "",
+      `歌手：${artistsList.value.map((a) => `${a.name}${a.id ? ` (ID: ${a.id})` : ""}`).join(" / ")}`,
+      albumData.value
+        ? `专辑：${albumData.value.name}${albumData.value.id ? ` (ID: ${albumData.value.id})` : ""}`
+        : "",
+      `歌曲ID：${songInfo.value.id}`,
+      duration.value ? `时长：${duration.value}` : "",
+      publishTime.value ? `发布时间：${publishTime.value}` : "",
+      `链接：${songLink.value}`,
+    ].filter((line) => line);
+
+    copyData(lines, "已复制全部信息");
+  };
+
+  onMounted(() => {
+    fetchSongDetail();
+  });
 </script>
 
 <style lang="scss" scoped>
-.copy-song-info {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  .divider {
-    font-size: 14px;
-    margin: 16px 0 12px 0;
+  .copy-song-info {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    .divider {
+      font-size: 14px;
+      margin: 16px 0 12px 0;
+    }
   }
-}
 </style>

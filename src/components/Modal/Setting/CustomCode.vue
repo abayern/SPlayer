@@ -33,48 +33,48 @@
 </template>
 
 <script setup lang="ts">
-import { useSettingStore } from "@/stores";
+  import { useSettingStore } from "@/stores";
 
-const settingStore = useSettingStore();
+  const settingStore = useSettingStore();
 
-// 本地编辑状态
-const customCss = ref(settingStore.customCss);
-const customJs = ref(settingStore.customJs);
+  // 本地编辑状态
+  const customCss = ref(settingStore.customCss);
+  const customJs = ref(settingStore.customJs);
 
-// 保存代码
-const saveCode = () => {
-  settingStore.customCss = customCss.value;
-  settingStore.customJs = customJs.value;
-  window.$message.success("自定义代码已保存");
-};
+  // 保存代码
+  const saveCode = () => {
+    settingStore.customCss = customCss.value;
+    settingStore.customJs = customJs.value;
+    window.$message.success("自定义代码已保存");
+  };
 
-watch(
-  () => settingStore.customCss,
-  (val) => (customCss.value = val),
-);
-watch(
-  () => settingStore.customJs,
-  (val) => (customJs.value = val),
-);
+  watch(
+    () => settingStore.customCss,
+    (val) => (customCss.value = val),
+  );
+  watch(
+    () => settingStore.customJs,
+    (val) => (customJs.value = val),
+  );
 </script>
 
 <style lang="scss" scoped>
-.custom-code {
-  .n-alert {
-    margin-bottom: 16px;
-  }
-  .n-h3 {
-    margin-bottom: 12px;
-  }
-  .n-text {
-    display: block;
-    margin-bottom: 8px;
-  }
-  .code-section {
-    margin-bottom: 20px;
-    &:last-of-type {
-      margin-bottom: 0;
+  .custom-code {
+    .n-alert {
+      margin-bottom: 16px;
+    }
+    .n-h3 {
+      margin-bottom: 12px;
+    }
+    .n-text {
+      display: block;
+      margin-bottom: 8px;
+    }
+    .code-section {
+      margin-bottom: 20px;
+      &:last-of-type {
+        margin-bottom: 0;
+      }
     }
   }
-}
 </style>

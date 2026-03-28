@@ -1,12 +1,13 @@
 <template>
   <Transition name="fade" mode="out-in">
-    <n-flex v-if="data.length > 0" key="content" :size="20" :class="['comment-list', { transparent }]" vertical>
-      <n-flex
-        v-for="(item, index) in data"
-        :key="index"
-        :size="0"
-        class="comments"
-      >
+    <n-flex
+      v-if="data.length > 0"
+      key="content"
+      :size="20"
+      :class="['comment-list', { transparent }]"
+      vertical
+    >
+      <n-flex v-for="(item, index) in data" :key="index" :size="0" class="comments">
         <div v-if="!transparent && !hiddenCover" class="user">
           <div class="avatar">
             <n-image
@@ -98,251 +99,251 @@
 </template>
 
 <script setup lang="ts">
-import type { CommentType } from "@/types/main";
-import { coverLoaded } from "@/utils/helper";
-import { formatCommentTime } from "@/utils/time";
-import { debounce } from "lodash-es";
-import { isLogin } from "@/utils/auth";
-import { openUserLogin } from "@/utils/modal";
-import emoji from "@/assets/data/emoji.json";
-import { commentLike, hugComment, getCommentHugList } from "@/api/comment";
-import { useDataStore } from "@/stores";
+  import type { CommentType } from "@/types/main";
+  import { coverLoaded } from "@/utils/helper";
+  import { formatCommentTime } from "@/utils/time";
+  import { debounce } from "lodash-es";
+  import { isLogin } from "@/utils/auth";
+  import { openUserLogin } from "@/utils/modal";
+  import emoji from "@/assets/data/emoji.json";
+  import { commentLike, hugComment, getCommentHugList } from "@/api/comment";
+  import { useDataStore } from "@/stores";
 
-const userStore = useDataStore();
+  const userStore = useDataStore();
 
-const props = defineProps<{
-  data: CommentType[];
-  loading: boolean;
-  type: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
-  loadMore?: boolean;
-  // 透明
-  transparent?: boolean;
-  // 资源 ID
-  resId: number | string;
-  hiddenCover?: boolean;
-}>();
+  const props = defineProps<{
+    data: CommentType[];
+    loading: boolean;
+    type: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
+    loadMore?: boolean;
+    // 透明
+    transparent?: boolean;
+    // 资源 ID
+    resId: number | string;
+    hiddenCover?: boolean;
+  }>();
 
-const emit = defineEmits<{
-  // 加载更多
-  loadMore: [];
-}>();
+  const emit = defineEmits<{
+    // 加载更多
+    loadMore: [];
+  }>();
 
-// 获取评论内容
-const getContent = (content: string) => {
-  try {
-    if (!content) return;
-    content = content.trim();
-    // 正则
-    const emojiRegex = /\[(\S+?)\]/g;
-    // 替换内容为表情
-    const replacedText = content.replace(emojiRegex, (match, emojiName) => {
-      // 在 emojiData 中查找匹配的 emojiName 对应的 emoji
-      const emojiObject = emoji.find((emoji) => emoji.emjName === emojiName);
-      // 如果找到了对应的 emoji，则返回该 emoji，否则返回原始字符串
-      return emojiObject ? emojiObject.emoji : match;
-    });
-    return replacedText;
-  } catch (error) {
-    console.error(error);
-    return content;
-  }
-};
+  // 获取评论内容
+  const getContent = (content: string) => {
+    try {
+      if (!content) return;
+      content = content.trim();
+      // 正则
+      const emojiRegex = /\[(\S+?)\]/g;
+      // 替换内容为表情
+      const replacedText = content.replace(emojiRegex, (match, emojiName) => {
+        // 在 emojiData 中查找匹配的 emojiName 对应的 emoji
+        const emojiObject = emoji.find((emoji) => emoji.emjName === emojiName);
+        // 如果找到了对应的 emoji，则返回该 emoji，否则返回原始字符串
+        return emojiObject ? emojiObject.emoji : match;
+      });
+      return replacedText;
+    } catch (error) {
+      console.error(error);
+      return content;
+    }
+  };
 
-// 评论点赞
-const likeComment = debounce(async (data: CommentType) => {
-  if (!isLogin()) {
-    openUserLogin();
-    return;
-  }
-  // 是否点赞
-  const isLiked = data.liked;
-  // 点赞或取消
-  const result = await commentLike(data.id, isLiked ? 2 : 1, props.type);
-  if (result.code === 200) {
-    data.liked = !isLiked;
-    if (data.likedCount) data.likedCount += isLiked ? -1 : 1;
-  } else {
-    window.$message.error(result.msg || "评论点赞失败");
-  }
-}, 300);
-
-// 抱一抱
-const handleHug = debounce(async (item: CommentType) => {
-  if (!isLogin()) {
-    openUserLogin();
-    return;
-  }
-  // 本地歌曲不支持抱一抱
-  if (typeof props.resId !== "number") return;
-  try {
-    const result = await hugComment(userStore.userData.userId, item.id, props.resId);
+  // 评论点赞
+  const likeComment = debounce(async (data: CommentType) => {
+    if (!isLogin()) {
+      openUserLogin();
+      return;
+    }
+    // 是否点赞
+    const isLiked = data.liked;
+    // 点赞或取消
+    const result = await commentLike(data.id, isLiked ? 2 : 1, props.type);
     if (result.code === 200) {
-      // 获取抱一抱列表以得到总数
-      try {
-        const listResult = await getCommentHugList(
-          userStore.userData.userId,
-          item.id,
-          props.resId,
-          1,
-          -1,
-          -1,
-          100,
-        );
-        const count =
-          listResult.data?.total ||
-          listResult.data?.count ||
-          listResult.data?.hugComments?.length ||
-          0;
+      data.liked = !isLiked;
+      if (data.likedCount) data.likedCount += isLiked ? -1 : 1;
+    } else {
+      window.$message.error(result.msg || "评论点赞失败");
+    }
+  }, 300);
 
-        if (count > 0) {
-          window.$message.success(`抱一抱成功，已有 ${count} 人向TA发送了抱一抱`);
-        } else {
+  // 抱一抱
+  const handleHug = debounce(async (item: CommentType) => {
+    if (!isLogin()) {
+      openUserLogin();
+      return;
+    }
+    // 本地歌曲不支持抱一抱
+    if (typeof props.resId !== "number") return;
+    try {
+      const result = await hugComment(userStore.userData.userId, item.id, props.resId);
+      if (result.code === 200) {
+        // 获取抱一抱列表以得到总数
+        try {
+          const listResult = await getCommentHugList(
+            userStore.userData.userId,
+            item.id,
+            props.resId,
+            1,
+            -1,
+            -1,
+            100,
+          );
+          const count =
+            listResult.data?.total ||
+            listResult.data?.count ||
+            listResult.data?.hugComments?.length ||
+            0;
+
+          if (count > 0) {
+            window.$message.success(`抱一抱成功，已有 ${count} 人向TA发送了抱一抱`);
+          } else {
+            window.$message.success("抱一抱成功");
+          }
+        } catch (e) {
+          console.error("Error fetching hug list:", e);
           window.$message.success("抱一抱成功");
         }
-      } catch (e) {
-        console.error("Error fetching hug list:", e);
-        window.$message.success("抱一抱成功");
+      } else {
+        window.$message.error(result.msg || "抱一抱失败");
       }
-    } else {
-      window.$message.error(result.msg || "抱一抱失败");
+    } catch (error) {
+      console.error("Hug comment error:", error);
+      window.$message.error("抱一抱失败");
     }
-  } catch (error) {
-    console.error("Hug comment error:", error);
-    window.$message.error("抱一抱失败");
-  }
-}, 300);
+  }, 300);
 </script>
 
 <style lang="scss" scoped>
-.comment-list {
-  margin-bottom: 20px;
-  :deep(.n-skeleton) {
-    min-height: 128px;
-    border-radius: 12px;
+  .comment-list {
     margin-bottom: 20px;
-  }
-  .comments {
-    min-height: 128px;
-    border-radius: 12px;
-    padding: 16px;
-    border: 2px solid rgba(var(--primary), 0.12);
-    background-color: var(--surface-container-hex);
-    .user {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-width: 60px;
-      width: 60px;
-      margin-right: 12px;
-      .avatar {
-        position: relative;
+    :deep(.n-skeleton) {
+      min-height: 128px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+    .comments {
+      min-height: 128px;
+      border-radius: 12px;
+      padding: 16px;
+      border: 2px solid rgba(var(--primary), 0.12);
+      background-color: var(--surface-container-hex);
+      .user {
         display: flex;
-        justify-content: center;
-        width: 54px;
-        height: 54px;
-        .cover {
-          width: 100%;
-          height: 100%;
-          border-radius: 50%;
-          overflow: hidden;
-          :deep(img) {
+        flex-direction: column;
+        align-items: center;
+        min-width: 60px;
+        width: 60px;
+        margin-right: 12px;
+        .avatar {
+          position: relative;
+          display: flex;
+          justify-content: center;
+          width: 54px;
+          height: 54px;
+          .cover {
             width: 100%;
             height: 100%;
-            opacity: 0;
-            transition: opacity 0.35s ease-in-out;
+            border-radius: 50%;
+            overflow: hidden;
+            :deep(img) {
+              width: 100%;
+              height: 100%;
+              opacity: 0;
+              transition: opacity 0.35s ease-in-out;
+            }
+          }
+          .annual {
+            position: absolute;
+            height: 16px;
+            right: 0;
+            bottom: 0;
+            background-color: #fff;
+            border: 1px solid #fff3;
+            border-radius: 50%;
           }
         }
-        .annual {
-          position: absolute;
+        .vip {
           height: 16px;
-          right: 0;
-          bottom: 0;
-          background-color: #fff;
-          border: 1px solid #fff3;
-          border-radius: 50%;
+          margin-top: 12px;
         }
       }
-      .vip {
-        height: 16px;
-        margin-top: 12px;
-      }
-    }
-    .data {
-      display: flex;
-      flex-direction: column;
-      flex: 1;
-      width: 100%;
-      .content {
-        .name {
-          font-weight: bold;
-          cursor: pointer;
-          &:hover {
-            color: var(--primary-hex);
-          }
-        }
-        .text {
-          white-space: pre-wrap;
-          user-select: text;
-        }
-      }
-      .reply {
+      .data {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
         width: 100%;
-        padding: 4px 8px;
-        border-radius: 8px;
-        font-size: 13px;
-        margin-top: 6px;
-        background-color: rgba(var(--main-cover-color, var(--primary)), 0.12);
-        .text {
-          white-space: pre-wrap;
-          user-select: text;
-        }
-      }
-      .meta {
-        padding-top: 12px;
-        margin-top: auto;
-        .item {
-          display: flex;
-          align-items: center;
-          .n-icon {
-            font-size: 16px;
-            margin-right: 4px;
+        .content {
+          .name {
+            font-weight: bold;
+            cursor: pointer;
+            &:hover {
+              color: var(--primary-hex);
+            }
+          }
+          .text {
+            white-space: pre-wrap;
+            user-select: text;
           }
         }
-        .hug {
-          margin-left: auto;
-          cursor: pointer;
-          &:hover {
+        .reply {
+          width: 100%;
+          padding: 4px 8px;
+          border-radius: 8px;
+          font-size: 13px;
+          margin-top: 6px;
+          background-color: rgba(var(--main-cover-color, var(--primary)), 0.12);
+          .text {
+            white-space: pre-wrap;
+            user-select: text;
+          }
+        }
+        .meta {
+          padding-top: 12px;
+          margin-top: auto;
+          .item {
+            display: flex;
+            align-items: center;
             .n-icon {
-              color: var(--primary-hex);
-              :deep(svg) {
-                opacity: 1;
+              font-size: 16px;
+              margin-right: 4px;
+            }
+          }
+          .hug {
+            margin-left: auto;
+            cursor: pointer;
+            &:hover {
+              .n-icon {
+                color: var(--primary-hex);
+                :deep(svg) {
+                  opacity: 1;
+                }
               }
             }
           }
-        }
-        .like {
-          cursor: pointer;
-          &:hover {
-            .n-icon,
-            .n-text {
-              color: var(--primary-hex);
-              :deep(svg) {
-                opacity: 1;
+          .like {
+            cursor: pointer;
+            &:hover {
+              .n-icon,
+              .n-text {
+                color: var(--primary-hex);
+                :deep(svg) {
+                  opacity: 1;
+                }
               }
             }
           }
         }
       }
     }
-  }
-  &.transparent {
-    .comments {
-      border-color: transparent;
-      background-color: rgba(var(--main-cover-color, var(--primary)), 0.08);
-      .content {
-        font-size: 16px;
+    &.transparent {
+      .comments {
+        border-color: transparent;
+        background-color: rgba(var(--main-cover-color, var(--primary)), 0.08);
+        .content {
+          font-size: 16px;
+        }
       }
     }
   }
-}
 </style>

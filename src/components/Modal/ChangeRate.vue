@@ -31,9 +31,9 @@
 </template>
 
 <script setup lang="ts">
-import { useStatusStore } from "@/stores";
-import { usePlayerController } from "@/core/player/PlayerController";
+  import { useStatusStore } from "@/stores";
+  import { usePlayerController } from "@/core/player/PlayerController";
 
-const player = usePlayerController();
-const statusStore = useStatusStore();
+  const player = usePlayerController();
+  const statusStore = useStatusStore();
 </script>

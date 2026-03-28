@@ -5,19 +5,19 @@
 </template>
 
 <script setup lang="ts">
-import type { SongType } from "@/types/main";
-import SongList from "@/components/List/SongList.vue";
+  import type { SongType } from "@/types/main";
+  import SongList from "@/components/List/SongList.vue";
 
-defineProps<{
-  data: SongType[];
-  loading: boolean;
-}>();
+  defineProps<{
+    data: SongType[];
+    loading: boolean;
+  }>();
 
-const getDownloadMusic = inject("getDownloadMusic") as () => void;
+  const getDownloadMusic = inject("getDownloadMusic") as () => void;
 </script>
 
 <style lang="scss" scoped>
-.download-downloaded {
-  height: 100%;
-}
+  .download-downloaded {
+    height: 100%;
+  }
 </style>

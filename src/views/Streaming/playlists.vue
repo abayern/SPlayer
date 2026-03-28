@@ -15,37 +15,37 @@
 </template>
 
 <script setup lang="ts">
-import type { CoverType } from "@/types/main";
-import { useStreamingStore } from "@/stores";
+  import type { CoverType } from "@/types/main";
+  import { useStreamingStore } from "@/stores";
 
-defineOptions({ inheritAttrs: false });
+  defineOptions({ inheritAttrs: false });
 
-const streamingStore = useStreamingStore();
+  const streamingStore = useStreamingStore();
 
-const loading = ref<boolean>(false);
+  const loading = ref<boolean>(false);
 
-// 歌单数据
-const playlistData = computed<CoverType[]>(() => {
-  return streamingStore.playlists.value.map((playlist) => ({
-    id: playlist.id,
-    name: playlist.name,
-    cover: playlist.cover || "/images/album.jpg?asset",
-    description: playlist.description,
-    count: playlist.songCount || 0,
-  }));
-});
+  // 歌单数据
+  const playlistData = computed<CoverType[]>(() => {
+    return streamingStore.playlists.value.map((playlist) => ({
+      id: playlist.id,
+      name: playlist.name,
+      cover: playlist.cover || "/images/album.jpg?asset",
+      description: playlist.description,
+      count: playlist.songCount || 0,
+    }));
+  });
 </script>
 
 <style lang="scss" scoped>
-.streaming-playlists {
-  flex: 1;
-  max-height: calc((var(--layout-height) - 132) * 1px);
-  overflow: hidden;
-  .cover-list {
-    padding: 4px;
+  .streaming-playlists {
+    flex: 1;
+    max-height: calc((var(--layout-height) - 132) * 1px);
+    overflow: hidden;
+    .cover-list {
+      padding: 4px;
+    }
+    .empty {
+      margin-top: 100px;
+    }
   }
-  .empty {
-    margin-top: 100px;
-  }
-}
 </style>

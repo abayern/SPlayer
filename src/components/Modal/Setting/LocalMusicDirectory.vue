@@ -35,33 +35,33 @@
 </template>
 
 <script setup lang="ts">
-import { useSettingStore } from "@/stores";
-import { changeLocalMusicPath } from "@/utils/helper";
-import SvgIcon from "@/components/Global/SvgIcon.vue";
+  import { useSettingStore } from "@/stores";
+  import { changeLocalMusicPath } from "@/utils/helper";
+  import SvgIcon from "@/components/Global/SvgIcon.vue";
 
-const settingStore = useSettingStore();
+  const settingStore = useSettingStore();
 </script>
 
 <style scoped lang="scss">
-.local-list-tip {
-  display: block;
-  margin-bottom: 12px;
-  opacity: 0.8;
-}
-.local-list {
-  :deep(.n-list-item__prefix) {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  .local-list-tip {
+    display: block;
+    margin-bottom: 12px;
+    opacity: 0.8;
   }
-  :deep(.n-list-item__main) {
-    .n-thing-main__description {
-      font-size: 13px;
-      opacity: 0.6;
+  .local-list {
+    :deep(.n-list-item__prefix) {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    :deep(.n-list-item__main) {
+      .n-thing-main__description {
+        font-size: 13px;
+        opacity: 0.6;
+      }
+    }
+    .empty {
+      padding: 20px 0;
     }
   }
-  .empty {
-    padding: 20px 0;
-  }
-}
 </style>

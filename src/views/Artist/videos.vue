@@ -13,50 +13,50 @@
 </template>
 
 <script setup lang="ts">
-import type { CoverType } from "@/types/main";
-import { artistVideos } from "@/api/artist";
-import { formatCoverList } from "@/utils/format";
-import { useSettingStore } from "@/stores";
+  import type { CoverType } from "@/types/main";
+  import { artistVideos } from "@/api/artist";
+  import { formatCoverList } from "@/utils/format";
+  import { useSettingStore } from "@/stores";
 
-const props = defineProps<{
-  id: number;
-}>();
+  const props = defineProps<{
+    id: number;
+  }>();
 
-const settingStore = useSettingStore();
+  const settingStore = useSettingStore();
 
-// 歌曲数据
-const loading = ref<boolean>(true);
-const hasMore = ref<boolean>(true);
-const videoData = ref<CoverType[]>([]);
-const videoOffset = ref<number>(0);
+  // 歌曲数据
+  const loading = ref<boolean>(true);
+  const hasMore = ref<boolean>(true);
+  const videoData = ref<CoverType[]>([]);
+  const videoOffset = ref<number>(0);
 
-// 获取歌手全部视频
-const getArtistAllVideos = async () => {
-  try {
-    if (!props.id) return;
-    loading.value = true;
-    // 获取数据
-    const result = await artistVideos(props.id, 50, videoOffset.value);
-    // 是否还有
-    hasMore.value = result?.hasMore;
-    // 处理数据
-    const listData = formatCoverList(result?.mvs);
-    videoData.value = videoData.value.concat(listData);
-    loading.value = false;
-  } catch (error) {
-    console.error("Error getting artist all videos:", error);
-  }
-};
+  // 获取歌手全部视频
+  const getArtistAllVideos = async () => {
+    try {
+      if (!props.id) return;
+      loading.value = true;
+      // 获取数据
+      const result = await artistVideos(props.id, 50, videoOffset.value);
+      // 是否还有
+      hasMore.value = result?.hasMore;
+      // 处理数据
+      const listData = formatCoverList(result?.mvs);
+      videoData.value = videoData.value.concat(listData);
+      loading.value = false;
+    } catch (error) {
+      console.error("Error getting artist all videos:", error);
+    }
+  };
 
-// 加载更多
-const loadMore = () => {
-  if (hasMore.value) {
-    videoOffset.value += 50;
-    getArtistAllVideos();
-  } else {
-    loading.value = false;
-  }
-};
+  // 加载更多
+  const loadMore = () => {
+    if (hasMore.value) {
+      videoOffset.value += 50;
+      getArtistAllVideos();
+    } else {
+      loading.value = false;
+    }
+  };
 
-onMounted(getArtistAllVideos);
+  onMounted(getArtistAllVideos);
 </script>

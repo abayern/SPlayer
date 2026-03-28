@@ -98,186 +98,186 @@
 </template>
 
 <script setup lang="ts">
-import { usePlayerController } from "@/core/player/PlayerController";
-import { useDataStore, useSettingStore, useStatusStore, useMusicStore } from "@/stores";
-import { isElectron } from "@/utils/env";
-import { renderIcon } from "@/utils/helper";
-import { openAutoClose, openChangeRate, openEqualizer, openABLoop } from "@/utils/modal";
-import { useAudioManager } from "@/core/player/AudioManager";
-import type { DropdownOption } from "naive-ui";
-import { useQualityControl } from "@/composables/useQualityControl";
+  import { usePlayerController } from "@/core/player/PlayerController";
+  import { useDataStore, useSettingStore, useStatusStore, useMusicStore } from "@/stores";
+  import { isElectron } from "@/utils/env";
+  import { renderIcon } from "@/utils/helper";
+  import { openAutoClose, openChangeRate, openEqualizer, openABLoop } from "@/utils/modal";
+  import { useAudioManager } from "@/core/player/AudioManager";
+  import type { DropdownOption } from "naive-ui";
+  import { useQualityControl } from "@/composables/useQualityControl";
 
-const dataStore = useDataStore();
-const statusStore = useStatusStore();
-const settingStore = useSettingStore();
-const musicStore = useMusicStore();
-const player = usePlayerController();
+  const dataStore = useDataStore();
+  const statusStore = useStatusStore();
+  const settingStore = useSettingStore();
+  const musicStore = useMusicStore();
+  const player = usePlayerController();
 
-const {
-  currentPlayingLevel,
-  qualityOptions,
-  loadQualities,
-  handleQualitySelect,
-  getQualityName,
-  isOnlineSong,
-} = useQualityControl();
+  const {
+    currentPlayingLevel,
+    qualityOptions,
+    loadQualities,
+    handleQualitySelect,
+    getQualityName,
+    isOnlineSong,
+  } = useQualityControl();
 
-const showQualityPopover = ref(false);
-const qualityTagRef = ref<HTMLElement | null>(null);
+  const showQualityPopover = ref(false);
+  const qualityTagRef = ref<HTMLElement | null>(null);
 
-const handleQualityClick = async () => {
-  if (showQualityPopover.value) {
-    showQualityPopover.value = false;
-  } else {
-    await loadQualities();
-    if (qualityOptions.value.length > 0) {
-      showQualityPopover.value = true;
-    }
-  }
-};
-
-// 点击外部关闭音质选择
-const handleClickOutside = (e: MouseEvent) => {
-  if (qualityTagRef.value && qualityTagRef.value.contains(e.target as Node)) {
-    return;
-  }
-  showQualityPopover.value = false;
-};
-
-// 更多功能
-const audioManager = useAudioManager();
-
-const controlsOptions = computed<DropdownOption[]>(() => [
-  {
-    label: "均衡器",
-    key: "equalizer",
-    icon: renderIcon("Eq"),
-    disabled: !audioManager.capabilities.supportsEqualizer,
-  },
-  {
-    label: "自动关闭",
-    key: "autoClose",
-    icon: renderIcon("TimeAuto"),
-  },
-  {
-    label: "AB 循环",
-    key: "abLoop",
-    icon: renderIcon("Repeat"),
-  },
-  {
-    label: "播放速度",
-    key: "rate",
-    disabled: !audioManager.capabilities.supportsRate,
-    icon: renderIcon("PlayRate"),
-  },
-]);
-
-// 更多功能选择
-const handleControls = (key: string) => {
-  switch (key) {
-    case "equalizer":
-      if (!audioManager.capabilities.supportsEqualizer) {
-        window.$message.warning("当前引擎不支持均衡器功能");
-        return;
+  const handleQualityClick = async () => {
+    if (showQualityPopover.value) {
+      showQualityPopover.value = false;
+    } else {
+      await loadQualities();
+      if (qualityOptions.value.length > 0) {
+        showQualityPopover.value = true;
       }
-      openEqualizer();
-      break;
-    case "autoClose":
-      openAutoClose();
-      break;
-    case "abLoop":
-      openABLoop();
-      break;
-    case "rate":
-      openChangeRate();
-      break;
-  }
-};
+    }
+  };
 
-// 更新音质数据
-watch(
-  () => musicStore.playSong.id,
-  async () => {
+  // 点击外部关闭音质选择
+  const handleClickOutside = (e: MouseEvent) => {
+    if (qualityTagRef.value && qualityTagRef.value.contains(e.target as Node)) {
+      return;
+    }
+    showQualityPopover.value = false;
+  };
+
+  // 更多功能
+  const audioManager = useAudioManager();
+
+  const controlsOptions = computed<DropdownOption[]>(() => [
+    {
+      label: "均衡器",
+      key: "equalizer",
+      icon: renderIcon("Eq"),
+      disabled: !audioManager.capabilities.supportsEqualizer,
+    },
+    {
+      label: "自动关闭",
+      key: "autoClose",
+      icon: renderIcon("TimeAuto"),
+    },
+    {
+      label: "AB 循环",
+      key: "abLoop",
+      icon: renderIcon("Repeat"),
+    },
+    {
+      label: "播放速度",
+      key: "rate",
+      disabled: !audioManager.capabilities.supportsRate,
+      icon: renderIcon("PlayRate"),
+    },
+  ]);
+
+  // 更多功能选择
+  const handleControls = (key: string) => {
+    switch (key) {
+      case "equalizer":
+        if (!audioManager.capabilities.supportsEqualizer) {
+          window.$message.warning("当前引擎不支持均衡器功能");
+          return;
+        }
+        openEqualizer();
+        break;
+      case "autoClose":
+        openAutoClose();
+        break;
+      case "abLoop":
+        openABLoop();
+        break;
+      case "rate":
+        openChangeRate();
+        break;
+    }
+  };
+
+  // 更新音质数据
+  watch(
+    () => musicStore.playSong.id,
+    async () => {
+      statusStore.availableQualities = [];
+      await loadQualities();
+      if (showQualityPopover.value && statusStore.availableQualities.length === 0) {
+        showQualityPopover.value = false;
+      }
+    },
+  );
+
+  // 监听 VIP 状态或设置变化，重新加载音质
+  watch([() => dataStore.userData.vipType, () => settingStore.disableAiAudio], async () => {
     statusStore.availableQualities = [];
     await loadQualities();
-    if (showQualityPopover.value && statusStore.availableQualities.length === 0) {
-      showQualityPopover.value = false;
-    }
-  },
-);
-
-// 监听 VIP 状态或设置变化，重新加载音质
-watch([() => dataStore.userData.vipType, () => settingStore.disableAiAudio], async () => {
-  statusStore.availableQualities = [];
-  await loadQualities();
-});
+  });
 </script>
 
 <style scoped lang="scss">
-.right-menu {
-  .menu-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 8px;
-    border-radius: 8px;
-    transition:
-      background-color 0.3s,
-      transform 0.3s;
-    cursor: pointer;
-    .n-icon {
-      font-size: 22px;
-      color: var(--primary-hex);
+  .right-menu {
+    .menu-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px;
+      border-radius: 8px;
+      transition:
+        background-color 0.3s,
+        transform 0.3s;
+      cursor: pointer;
+      .n-icon {
+        font-size: 22px;
+        color: var(--primary-hex);
+      }
+      &:hover {
+        transform: scale(1.1);
+        background-color: rgba(var(--primary), 0.28);
+      }
+      &:active {
+        transform: scale(1);
+      }
     }
-    &:hover {
-      transform: scale(1.1);
+    :deep(.n-badge-sup) {
       background-color: rgba(var(--primary), 0.28);
+      backdrop-filter: blur(20px);
+      // font-size: 10px;
+      .n-base-slot-machine {
+        color: var(--primary-hex);
+      }
     }
-    &:active {
-      transform: scale(1);
+    .quality-tag {
+      height: 26px;
+      padding: 0 8px;
+      border-radius: 8px;
+      cursor: pointer;
     }
-  }
-  :deep(.n-badge-sup) {
-    background-color: rgba(var(--primary), 0.28);
-    backdrop-filter: blur(20px);
-    // font-size: 10px;
-    .n-base-slot-machine {
-      color: var(--primary-hex);
-    }
-  }
-  .quality-tag {
-    height: 26px;
-    padding: 0 8px;
-    border-radius: 8px;
-    cursor: pointer;
-  }
-  @media (max-width: 810px) {
-    .hidden {
-      display: none;
+    @media (max-width: 810px) {
+      .hidden {
+        display: none;
+      }
     }
   }
-}
-.quality-title {
-  .title {
-    font-size: 14px;
-    line-height: normal;
+  .quality-title {
+    .title {
+      font-size: 14px;
+      line-height: normal;
+    }
+    .tip {
+      font-size: 12px;
+      opacity: 0.6;
+    }
   }
-  .tip {
-    font-size: 12px;
-    opacity: 0.6;
+  .volume-change {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    height: 180px;
+    width: 58px;
+    align-items: center;
+    .slider-num {
+      margin-top: 8px;
+      font-size: 13px;
+      white-space: nowrap;
+    }
   }
-}
-.volume-change {
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  height: 180px;
-  width: 58px;
-  align-items: center;
-  .slider-num {
-    margin-top: 8px;
-    font-size: 13px;
-    white-space: nowrap;
-  }
-}
 </style>

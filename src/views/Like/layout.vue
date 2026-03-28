@@ -42,94 +42,94 @@
 </template>
 
 <script setup lang="ts">
-import { useMobile } from "@/composables/useMobile";
-import { useDataStore, useSettingStore } from "@/stores";
+  import { useMobile } from "@/composables/useMobile";
+  import { useDataStore, useSettingStore } from "@/stores";
 
-const router = useRouter();
-const dataStore = useDataStore();
-const settingStore = useSettingStore();
+  const router = useRouter();
+  const dataStore = useDataStore();
+  const settingStore = useSettingStore();
 
-const { isSmall } = useMobile();
+  const { isSmall } = useMobile();
 
-const likeType = ref<string>((router.currentRoute.value?.name as string) || "like-playlists");
+  const likeType = ref<string>((router.currentRoute.value?.name as string) || "like-playlists");
 
-// 喜欢数据
-const likeData = computed(() => [
-  {
-    icon: "MusicList",
-    name: "like-playlists",
-    length: dataStore.userLikeData.playlists?.length || 0,
-  },
-  {
-    icon: "Album",
-    name: "like-albums",
-    length: dataStore.userLikeData.albums?.length || 0,
-  },
-  {
-    icon: "Artist",
-    name: "like-artists",
-    length: dataStore.userLikeData.artists?.length || 0,
-  },
-  {
-    icon: "Video",
-    name: "like-videos",
-    length: dataStore.userLikeData.mvs?.length || 0,
-  },
-  {
-    icon: "Record",
-    name: "like-radios",
-    length: dataStore.userLikeData.djs?.length || 0,
-  },
-]);
+  // 喜欢数据
+  const likeData = computed(() => [
+    {
+      icon: "MusicList",
+      name: "like-playlists",
+      length: dataStore.userLikeData.playlists?.length || 0,
+    },
+    {
+      icon: "Album",
+      name: "like-albums",
+      length: dataStore.userLikeData.albums?.length || 0,
+    },
+    {
+      icon: "Artist",
+      name: "like-artists",
+      length: dataStore.userLikeData.artists?.length || 0,
+    },
+    {
+      icon: "Video",
+      name: "like-videos",
+      length: dataStore.userLikeData.mvs?.length || 0,
+    },
+    {
+      icon: "Record",
+      name: "like-radios",
+      length: dataStore.userLikeData.djs?.length || 0,
+    },
+  ]);
 
-// 监听路由变化
-watch(
-  () => router.currentRoute.value.name,
-  (val) => {
-    if (val && (val as string).startsWith("like-")) {
-      likeType.value = val as string;
-    }
-  },
-);
+  // 监听路由变化
+  watch(
+    () => router.currentRoute.value.name,
+    (val) => {
+      if (val && (val as string).startsWith("like-")) {
+        likeType.value = val as string;
+      }
+    },
+  );
 </script>
 
 <style lang="scss" scoped>
-.like {
-  display: flex;
-  flex-direction: column;
-  .title {
+  .like {
     display: flex;
-    align-items: flex-end;
-    line-height: normal;
-    margin-top: 12px;
-    margin-bottom: 20px;
-    height: 40px;
-    .keyword {
-      font-size: 30px;
-      font-weight: bold;
-      margin-right: 12px;
+    flex-direction: column;
+    .title {
+      display: flex;
+      align-items: flex-end;
       line-height: normal;
-    }
-    .status {
-      font-size: 15px;
-      font-weight: normal;
-      line-height: 30px;
-      .item {
-        display: flex;
-        align-items: center;
-        opacity: 0.9;
-        cursor: pointer;
-        .n-icon {
-          margin-right: 4px;
+      margin-top: 12px;
+      margin-bottom: 20px;
+      height: 40px;
+      .keyword {
+        font-size: 30px;
+        font-weight: bold;
+        margin-right: 12px;
+        line-height: normal;
+      }
+      .status {
+        font-size: 15px;
+        font-weight: normal;
+        line-height: 30px;
+        .item {
+          display: flex;
+          align-items: center;
+          opacity: 0.9;
+          cursor: pointer;
+          .n-icon {
+            margin-right: 4px;
+          }
         }
       }
     }
-  }
-  // 512px
-  @media (max-width: 512px) {
-    .status {
-      display: none !important;
+    // 512px
+    @media (max-width: 512px) {
+      .status {
+        display: none !important;
+      }
     }
   }
-}
 </style>

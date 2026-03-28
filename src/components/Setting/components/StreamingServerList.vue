@@ -69,104 +69,104 @@
 </template>
 
 <script setup lang="ts">
-import type { StreamingServerConfig, StreamingServerType } from "@/types/streaming";
-import { useStreamingStore } from "@/stores";
-import { openStreamingServerConfig } from "@/utils/modal";
-import { SettingItem } from "@/types/settings";
+  import type { StreamingServerConfig, StreamingServerType } from "@/types/streaming";
+  import { useStreamingStore } from "@/stores";
+  import { openStreamingServerConfig } from "@/utils/modal";
+  import { SettingItem } from "@/types/settings";
 
-defineProps<{ item?: SettingItem }>();
+  defineProps<{ item?: SettingItem }>();
 
-const streamingStore = useStreamingStore();
+  const streamingStore = useStreamingStore();
 
-// 连接状态
-const connectingServerId = ref<string | null>(null);
+  // 连接状态
+  const connectingServerId = ref<string | null>(null);
 
-// 服务器列表
-const servers = computed(() => streamingStore.servers.value);
+  // 服务器列表
+  const servers = computed(() => streamingStore.servers.value);
 
-// 判断服务器是否为当前激活的服务器
-const isServerActive = (serverId: string): boolean => {
-  return streamingStore.activeServer.value?.id === serverId && streamingStore.isConnected.value;
-};
-
-// 获取服务器类型标签
-const getServerTypeLabel = (type: StreamingServerType): string => {
-  const labels: Record<StreamingServerType, string> = {
-    navidrome: "Navidrome",
-    jellyfin: "Jellyfin",
-    emby: "Emby",
-    subsonic: "Subsonic", // 兼容
-    opensubsonic: "OpenSubsonic",
+  // 判断服务器是否为当前激活的服务器
+  const isServerActive = (serverId: string): boolean => {
+    return streamingStore.activeServer.value?.id === serverId && streamingStore.isConnected.value;
   };
-  return labels[type] || type;
-};
 
-// 添加服务器
-const handleAdd = () => {
-  openStreamingServerConfig(null, async (config) => {
+  // 获取服务器类型标签
+  const getServerTypeLabel = (type: StreamingServerType): string => {
+    const labels: Record<StreamingServerType, string> = {
+      navidrome: "Navidrome",
+      jellyfin: "Jellyfin",
+      emby: "Emby",
+      subsonic: "Subsonic", // 兼容
+      opensubsonic: "OpenSubsonic",
+    };
+    return labels[type] || type;
+  };
+
+  // 添加服务器
+  const handleAdd = () => {
+    openStreamingServerConfig(null, async (config) => {
+      try {
+        await streamingStore.addServer(config);
+        window.$message.success("服务器已添加");
+      } catch (error) {
+        window.$message.error("添加失败：" + (error instanceof Error ? error.message : "未知错误"));
+      }
+    });
+  };
+
+  // 编辑服务器
+  const handleEdit = (server: StreamingServerConfig) => {
+    openStreamingServerConfig(server, async (config) => {
+      try {
+        await streamingStore.updateServer(server.id, config);
+        window.$message.success("服务器已更新");
+      } catch (error) {
+        window.$message.error("更新失败：" + (error instanceof Error ? error.message : "未知错误"));
+      }
+    });
+  };
+
+  // 删除服务器
+  const handleDelete = async (serverId: string) => {
     try {
-      await streamingStore.addServer(config);
-      window.$message.success("服务器已添加");
+      await streamingStore.removeServer(serverId);
+      window.$message.success("服务器已删除");
     } catch (error) {
-      window.$message.error("添加失败：" + (error instanceof Error ? error.message : "未知错误"));
+      window.$message.error("删除失败：" + (error instanceof Error ? error.message : "未知错误"));
     }
-  });
-};
+  };
 
-// 编辑服务器
-const handleEdit = (server: StreamingServerConfig) => {
-  openStreamingServerConfig(server, async (config) => {
+  // 连接服务器
+  const handleConnect = async (server: StreamingServerConfig) => {
+    connectingServerId.value = server.id;
     try {
-      await streamingStore.updateServer(server.id, config);
-      window.$message.success("服务器已更新");
+      const success = await streamingStore.connectToServer(server.id);
+      if (success) {
+        window.$message.success(`已连接到 ${server.name}`);
+      } else {
+        window.$message.error(streamingStore.connectionStatus.value.error || "连接失败");
+      }
     } catch (error) {
-      window.$message.error("更新失败：" + (error instanceof Error ? error.message : "未知错误"));
+      window.$message.error("连接失败：" + (error instanceof Error ? error.message : "未知错误"));
+    } finally {
+      connectingServerId.value = null;
     }
-  });
-};
-
-// 删除服务器
-const handleDelete = async (serverId: string) => {
-  try {
-    await streamingStore.removeServer(serverId);
-    window.$message.success("服务器已删除");
-  } catch (error) {
-    window.$message.error("删除失败：" + (error instanceof Error ? error.message : "未知错误"));
-  }
-};
-
-// 连接服务器
-const handleConnect = async (server: StreamingServerConfig) => {
-  connectingServerId.value = server.id;
-  try {
-    const success = await streamingStore.connectToServer(server.id);
-    if (success) {
-      window.$message.success(`已连接到 ${server.name}`);
-    } else {
-      window.$message.error(streamingStore.connectionStatus.value.error || "连接失败");
-    }
-  } catch (error) {
-    window.$message.error("连接失败：" + (error instanceof Error ? error.message : "未知错误"));
-  } finally {
-    connectingServerId.value = null;
-  }
-};
+  };
 </script>
 
 <style lang="scss" scoped>
-#server-list-choose {
-  .sub-item {
-    margin-top: 12px;
-    background-color: rgba(var(--primary), 0.05);
+  #server-list-choose {
+    .sub-item {
+      margin-top: 12px;
+      background-color: rgba(var(--primary), 0.05);
+    }
+    .n-flex {
+      width: 100%;
+    }
+    .n-collapse-transition {
+      margin-top: 12px;
+    }
+    .set {
+      width: 200px;
+    }
   }
-  .n-flex {
-    width: 100%;
-  }
-  .n-collapse-transition {
-    margin-top: 12px;
-  }
-  .set {
-    width: 200px;
-  }
-}
 </style>

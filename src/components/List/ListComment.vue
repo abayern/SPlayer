@@ -44,152 +44,152 @@
 </template>
 
 <script setup lang="ts">
-import type { CommentType } from "@/types/main";
-import CommentList from "@/components/List/CommentList.vue";
-import { useElementSize } from "@vueuse/core";
-import { getComment, getHotComment } from "@/api/comment";
-import { formatCommentList } from "@/utils/format";
-import { isEmpty } from "lodash-es";
+  import type { CommentType } from "@/types/main";
+  import CommentList from "@/components/List/CommentList.vue";
+  import { useElementSize } from "@vueuse/core";
+  import { getComment, getHotComment } from "@/api/comment";
+  import { formatCommentList } from "@/utils/format";
+  import { isEmpty } from "lodash-es";
 
-const props = withDefaults(
-  defineProps<{
-    // 资源 ID
-    id: number;
-    // 评论类型 0: 歌曲, 1: mv, 2: 歌单, 3: 专辑, 4: 电台节目, 5: 视频, 6: 动态, 7: 电台
-    type: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
-    // 高度
-    height?: number | "auto"; // px
-  }>(),
-  {},
-);
+  const props = withDefaults(
+    defineProps<{
+      // 资源 ID
+      id: number;
+      // 评论类型 0: 歌曲, 1: mv, 2: 歌单, 3: 专辑, 4: 电台节目, 5: 视频, 6: 动态, 7: 电台
+      type: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
+      // 高度
+      height?: number | "auto"; // px
+    }>(),
+    {},
+  );
 
-const commentListRef = ref<HTMLElement | null>(null);
+  const commentListRef = ref<HTMLElement | null>(null);
 
-// 列表高度
-const { height: commentListHeight, stop: stopCalcHeight } = useElementSize(commentListRef);
+  // 列表高度
+  const { height: commentListHeight, stop: stopCalcHeight } = useElementSize(commentListRef);
 
-// 评论数据
-const commentLoading = ref<boolean>(false);
-const commentData = ref<CommentType[]>([]);
-const commentHotData = ref<CommentType[] | null>(null);
-const commentPage = ref<number>(1);
-const commentHasMore = ref<boolean>(true);
-const commentTotalCount = ref<number>(0);
+  // 评论数据
+  const commentLoading = ref<boolean>(false);
+  const commentData = ref<CommentType[]>([]);
+  const commentHotData = ref<CommentType[] | null>(null);
+  const commentPage = ref<number>(1);
+  const commentHasMore = ref<boolean>(true);
+  const commentTotalCount = ref<number>(0);
 
-// 当前请求的 id，用于竞态保护
-const currentRequestId = ref<number>(0);
+  // 当前请求的 id，用于竞态保护
+  const currentRequestId = ref<number>(0);
 
-// 获取热门评论
-const getHotCommentData = async (requestId: number) => {
-  if (!props.id) return;
-  try {
-    const result = await getHotComment(props.id, props.type);
-    if (currentRequestId.value !== requestId) return;
-    const formatData = formatCommentList(result.hotComments);
-    commentHotData.value = formatData?.length > 0 ? formatData : null;
-  } catch (error) {
-    console.error("Error getting hot comment data:", error);
-    if (currentRequestId.value === requestId) commentHotData.value = null;
-  }
-};
-
-// 获取评论数据
-const getCommentData = async (clean: boolean = true) => {
-  if (!props.id) return;
-  const requestId = clean ? ++currentRequestId.value : currentRequestId.value;
-  try {
-    commentLoading.value = true;
-    if (clean) {
-      commentData.value = [];
-      commentPage.value = 1;
-      commentHasMore.value = true;
+  // 获取热门评论
+  const getHotCommentData = async (requestId: number) => {
+    if (!props.id) return;
+    try {
+      const result = await getHotComment(props.id, props.type);
+      if (currentRequestId.value !== requestId) return;
+      const formatData = formatCommentList(result.hotComments);
+      commentHotData.value = formatData?.length > 0 ? formatData : null;
+    } catch (error) {
+      console.error("Error getting hot comment data:", error);
+      if (currentRequestId.value === requestId) commentHotData.value = null;
     }
-    // 获取热门评论
-    await getHotCommentData(requestId);
-    if (currentRequestId.value !== requestId) return;
-    // 分页参数
-    const cursor =
-      commentPage.value > 1 && commentData.value?.length > 0
-        ? commentData.value[commentData.value.length - 1]?.time
-        : undefined;
-    // 获取评论
-    const result = await getComment(props.id, props.type, commentPage.value, 20, 3, cursor);
-    if (currentRequestId.value !== requestId) return;
-    // 更新评论总数
-    if (result.data?.totalCount != null) {
-      commentTotalCount.value = result.data.totalCount;
-    }
-    if (isEmpty(result.data?.comments)) {
-      commentHasMore.value = false;
+  };
+
+  // 获取评论数据
+  const getCommentData = async (clean: boolean = true) => {
+    if (!props.id) return;
+    const requestId = clean ? ++currentRequestId.value : currentRequestId.value;
+    try {
+      commentLoading.value = true;
+      if (clean) {
+        commentData.value = [];
+        commentPage.value = 1;
+        commentHasMore.value = true;
+      }
+      // 获取热门评论
+      await getHotCommentData(requestId);
+      if (currentRequestId.value !== requestId) return;
+      // 分页参数
+      const cursor =
+        commentPage.value > 1 && commentData.value?.length > 0
+          ? commentData.value[commentData.value.length - 1]?.time
+          : undefined;
+      // 获取评论
+      const result = await getComment(props.id, props.type, commentPage.value, 20, 3, cursor);
+      if (currentRequestId.value !== requestId) return;
+      // 更新评论总数
+      if (result.data?.totalCount != null) {
+        commentTotalCount.value = result.data.totalCount;
+      }
+      if (isEmpty(result.data?.comments)) {
+        commentHasMore.value = false;
+        commentLoading.value = false;
+        return;
+      }
+      // 处理数据
+      const formatData = formatCommentList(result.data.comments);
+      commentData.value = commentData.value.concat(formatData);
+      // 是否还有
+      commentHasMore.value = result.data.hasMore;
       commentLoading.value = false;
-      return;
+    } catch (error) {
+      if (currentRequestId.value !== requestId) return;
+      console.error("Error getting comment data:", error);
+      window.$message.error("获取评论数据失败");
+      commentLoading.value = false;
     }
-    // 处理数据
-    const formatData = formatCommentList(result.data.comments);
-    commentData.value = commentData.value.concat(formatData);
-    // 是否还有
-    commentHasMore.value = result.data.hasMore;
-    commentLoading.value = false;
-  } catch (error) {
-    if (currentRequestId.value !== requestId) return;
-    console.error("Error getting comment data:", error);
-    window.$message.error("获取评论数据失败");
-    commentLoading.value = false;
-  }
-};
+  };
 
-// 加载更多评论
-const handleLoadMore = () => {
-  if (!commentHasMore.value || commentLoading.value) return;
-  commentPage.value += 1;
-  getCommentData(false);
-};
+  // 加载更多评论
+  const handleLoadMore = () => {
+    if (!commentHasMore.value || commentLoading.value) return;
+    commentPage.value += 1;
+    getCommentData(false);
+  };
 
-// 监听 id 变化，重置评论数据
-watch(
-  () => props.id,
-  (newId) => {
-    if (newId) {
-      commentData.value = [];
-      commentHotData.value = null;
-      commentPage.value = 1;
-      commentHasMore.value = true;
-      commentTotalCount.value = 0;
-      getCommentData();
-    }
-  },
-  { immediate: true },
-);
+  // 监听 id 变化，重置评论数据
+  watch(
+    () => props.id,
+    (newId) => {
+      if (newId) {
+        commentData.value = [];
+        commentHotData.value = null;
+        commentPage.value = 1;
+        commentHasMore.value = true;
+        commentTotalCount.value = 0;
+        getCommentData();
+      }
+    },
+    { immediate: true },
+  );
 
-// 传入固定高度时不需要 ResizeObserver
-watch(
-  () => props.height,
-  (newHeight) => {
-    if (newHeight != null) stopCalcHeight();
-  },
-  { immediate: true },
-);
+  // 传入固定高度时不需要 ResizeObserver
+  watch(
+    () => props.height,
+    (newHeight) => {
+      if (newHeight != null) stopCalcHeight();
+    },
+    { immediate: true },
+  );
 </script>
 
 <style lang="scss" scoped>
-.list-comment {
-  height: 100%;
-  .title {
-    display: flex;
-    align-items: center;
-    font-size: 18px;
-    font-weight: bold;
-    margin-bottom: 12px;
-    .n-icon {
-      margin-right: 8px;
-      font-size: 20px;
-    }
-    .count {
-      margin-left: 6px;
-      font-size: 13px;
-      font-weight: normal;
-      opacity: 0.6;
+  .list-comment {
+    height: 100%;
+    .title {
+      display: flex;
+      align-items: center;
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 12px;
+      .n-icon {
+        margin-right: 8px;
+        font-size: 20px;
+      }
+      .count {
+        margin-left: 6px;
+        font-size: 13px;
+        font-weight: normal;
+        opacity: 0.6;
+      }
     }
   }
-}
 </style>

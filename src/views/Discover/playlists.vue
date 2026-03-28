@@ -94,118 +94,118 @@
 </template>
 
 <script setup lang="ts">
-import type { CoverType } from "@/types/main";
-import { useDataStore, useSettingStore } from "@/stores";
-import { allCatlistPlaylist } from "@/api/playlist";
-import { formatCoverList } from "@/utils/format";
+  import type { CoverType } from "@/types/main";
+  import { useDataStore, useSettingStore } from "@/stores";
+  import { allCatlistPlaylist } from "@/api/playlist";
+  import { formatCoverList } from "@/utils/format";
 
-const router = useRouter();
-const dataStore = useDataStore();
-const settingStore = useSettingStore();
+  const router = useRouter();
+  const dataStore = useDataStore();
+  const settingStore = useSettingStore();
 
-const catChangeShow = ref<boolean>(false);
+  const catChangeShow = ref<boolean>(false);
 
-// 歌单分类
-const catName = ref<string>((router.currentRoute.value.query?.cat as string) || "全部歌单");
-const catHqType = ref<string>(
-  (router.currentRoute.value.query?.hq as string) === "true" ? "hq" : "normal",
-);
-
-// 歌单数据
-const hasMore = ref<boolean>(true);
-const loading = ref<boolean>(true);
-const playlistOffset = ref<number>(0);
-const playlistCount = ref<number>(1);
-const playlistData = ref<CoverType[]>([]);
-
-// 是否有精品歌单
-const hasHqPlaylist = computed<boolean>(() => {
-  if (dataStore.catData.hqCats?.length === 0) return false;
-  if (catName.value === "全部歌单") return true;
-  return dataStore.catData.hqCats.some((item) => item.name === catName.value);
-});
-
-// 获取歌单数据
-const getAllCatlistPlaylist = async () => {
-  // before
-  const before = playlistData.value?.at(-1)?.updateTime ?? undefined;
-  // 获取数据
-  loading.value = true;
-  const result = await allCatlistPlaylist(
-    catName.value,
-    50,
-    playlistOffset.value,
-    catHqType.value === "hq" ? true : false,
-    before,
+  // 歌单分类
+  const catName = ref<string>((router.currentRoute.value.query?.cat as string) || "全部歌单");
+  const catHqType = ref<string>(
+    (router.currentRoute.value.query?.hq as string) === "true" ? "hq" : "normal",
   );
-  // 是否还有
-  playlistCount.value = result?.total;
-  hasMore.value = result.more || result?.total > playlistOffset.value + 50;
-  // 处理数据
-  const listData = formatCoverList(result.playlists);
-  playlistData.value = playlistData.value?.concat(listData);
-  loading.value = false;
-};
 
-// 加载更多
-const loadMore = () => {
-  playlistOffset.value += 50;
-  getAllCatlistPlaylist();
-};
+  // 歌单数据
+  const hasMore = ref<boolean>(true);
+  const loading = ref<boolean>(true);
+  const playlistOffset = ref<number>(0);
+  const playlistCount = ref<number>(1);
+  const playlistData = ref<CoverType[]>([]);
 
-// 分类切换
-const changeCatName = (cat: string, hq: string = "false") => {
-  catChangeShow.value = false;
-  router.push({
-    name: "discover-playlists",
-    query: { cat, hq },
+  // 是否有精品歌单
+  const hasHqPlaylist = computed<boolean>(() => {
+    if (dataStore.catData.hqCats?.length === 0) return false;
+    if (catName.value === "全部歌单") return true;
+    return dataStore.catData.hqCats.some((item) => item.name === catName.value);
   });
-};
 
-// 参数变化
-onBeforeRouteUpdate((to) => {
-  if (to.name !== "discover-playlists") return;
-  catName.value = (to.query?.cat as string) || "全部歌单";
-  catHqType.value = (to.query?.hq as string) === "true" ? "hq" : "normal";
-  playlistData.value = [];
-  // 获取歌单
-  getAllCatlistPlaylist();
-});
+  // 获取歌单数据
+  const getAllCatlistPlaylist = async () => {
+    // before
+    const before = playlistData.value?.at(-1)?.updateTime ?? undefined;
+    // 获取数据
+    loading.value = true;
+    const result = await allCatlistPlaylist(
+      catName.value,
+      50,
+      playlistOffset.value,
+      catHqType.value === "hq" ? true : false,
+      before,
+    );
+    // 是否还有
+    playlistCount.value = result?.total;
+    hasMore.value = result.more || result?.total > playlistOffset.value + 50;
+    // 处理数据
+    const listData = formatCoverList(result.playlists);
+    playlistData.value = playlistData.value?.concat(listData);
+    loading.value = false;
+  };
 
-onMounted(() => {
-  dataStore.getPlaylistCatList();
-  // 获取歌单
-  getAllCatlistPlaylist();
-});
+  // 加载更多
+  const loadMore = () => {
+    playlistOffset.value += 50;
+    getAllCatlistPlaylist();
+  };
+
+  // 分类切换
+  const changeCatName = (cat: string, hq: string = "false") => {
+    catChangeShow.value = false;
+    router.push({
+      name: "discover-playlists",
+      query: { cat, hq },
+    });
+  };
+
+  // 参数变化
+  onBeforeRouteUpdate((to) => {
+    if (to.name !== "discover-playlists") return;
+    catName.value = (to.query?.cat as string) || "全部歌单";
+    catHqType.value = (to.query?.hq as string) === "true" ? "hq" : "normal";
+    playlistData.value = [];
+    // 获取歌单
+    getAllCatlistPlaylist();
+  });
+
+  onMounted(() => {
+    dataStore.getPlaylistCatList();
+    // 获取歌单
+    getAllCatlistPlaylist();
+  });
 </script>
 
 <style lang="scss" scoped>
-.discover-playlists {
-  .menu {
-    margin-top: 20px;
-    .n-button {
-      height: 40px;
-    }
-    .n-tabs {
-      height: 40px;
-      width: 140px;
-      --n-tab-border-radius: 25px !important;
-      :deep(.n-tabs-rail) {
-        outline: 1px solid var(--n-tab-color-segment);
+  .discover-playlists {
+    .menu {
+      margin-top: 20px;
+      .n-button {
+        height: 40px;
+      }
+      .n-tabs {
+        height: 40px;
+        width: 140px;
+        --n-tab-border-radius: 25px !important;
+        :deep(.n-tabs-rail) {
+          outline: 1px solid var(--n-tab-color-segment);
+        }
       }
     }
   }
-}
-.cat-list {
-  align-content: flex-start;
-  min-height: 140px;
-  margin-top: 8px;
-  .n-tag {
-    font-size: 14px;
-    .n-icon {
-      font-size: 16px;
-      margin-left: 4px;
+  .cat-list {
+    align-content: flex-start;
+    min-height: 140px;
+    margin-top: 8px;
+    .n-tag {
+      font-size: 14px;
+      .n-icon {
+        font-size: 16px;
+        margin-left: 4px;
+      }
     }
   }
-}
 </style>

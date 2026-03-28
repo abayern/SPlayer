@@ -67,157 +67,157 @@
 </template>
 
 <script setup lang="ts">
-import type { ArtistType } from "@/types/main";
-import { removeBrackets } from "@/utils/format";
-import { useSettingStore } from "@/stores";
+  import type { ArtistType } from "@/types/main";
+  import { removeBrackets } from "@/utils/format";
+  import { useSettingStore } from "@/stores";
 
-defineProps<{
-  data: ArtistType[];
-  type?: "playlist" | "album" | "video";
-  loadMore?: boolean;
-  loading?: boolean;
-  loadingText?: string;
-  hiddenCover?: boolean;
-}>();
+  defineProps<{
+    data: ArtistType[];
+    type?: "playlist" | "album" | "video";
+    loadMore?: boolean;
+    loading?: boolean;
+    loadingText?: string;
+    hiddenCover?: boolean;
+  }>();
 
-const emit = defineEmits<{
-  // 加载更多
-  loadMore: [];
-}>();
+  const emit = defineEmits<{
+    // 加载更多
+    loadMore: [];
+  }>();
 
-const router = useRouter();
-const settingStore = useSettingStore();
+  const router = useRouter();
+  const settingStore = useSettingStore();
 </script>
 
 <style lang="scss" scoped>
-.artist-list {
-  width: 100%;
-  padding: 20px 4px;
-  .artist-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: 20px;
-    @media (max-width: 600px) {
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
+  .artist-list {
+    width: 100%;
+    padding: 20px 4px;
+    .artist-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 20px;
+      @media (max-width: 600px) {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+      }
     }
-  }
-  .artist-item {
-    position: relative;
-    height: auto;
-    border-radius: 16px;
-    z-index: 0;
-    transition:
-      background-color 0.3s,
-      transform 0.3s;
-    cursor: pointer;
-    .cover {
+    .artist-item {
       position: relative;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      width: 100%;
-      padding: 12px;
-      aspect-ratio: 1 / 1;
-      border-radius: 50%;
-      transition: border-radius 0.3s;
-      .cover-img {
-        border-radius: 50%;
-        overflow: hidden;
-        z-index: 1;
-        transition:
-          filter 0.3s,
-          transform 0.3s;
-      }
-      .cover-shadow {
-        opacity: 0;
-        position: absolute;
-        border-radius: 50%;
-        overflow: hidden;
-        top: 20%;
-        width: 80%;
-        height: auto;
-        aspect-ratio: 1/1;
-        filter: blur(10px) opacity(0.5);
-        transform: scale(0.92, 0.96);
-        z-index: 0;
-        transition: opacity 0.3s;
-        :deep(img) {
-          opacity: 1;
-        }
-      }
-      .n-icon {
-        position: absolute;
-        font-size: 40px;
-        color: #fff;
-        transform: scale(0.6);
-        opacity: 0;
-        z-index: 2;
-        transition:
-          opacity 0.3s,
-          transform 0.3s;
-      }
-      .n-skeleton {
-        height: 100%;
-      }
-    }
-    .cover-data {
-      display: flex;
-      align-items: center;
-      flex-direction: column;
-      padding: 0 12px;
-      .name {
-        font-size: 16px;
-        margin-bottom: 4px;
-      }
-      :deep(.n-skeleton) {
-        &:first-child {
-          margin-bottom: 12px;
-        }
-      }
-    }
-    &:hover {
+      height: auto;
+      border-radius: 16px;
+      z-index: 0;
+      transition:
+        background-color 0.3s,
+        transform 0.3s;
+      cursor: pointer;
       .cover {
+        position: relative;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        padding: 12px;
+        aspect-ratio: 1 / 1;
+        border-radius: 50%;
+        transition: border-radius 0.3s;
         .cover-img {
-          box-shadow: 0 4px 16px #00000020;
-          :deep(img) {
-            transform: scale(1.1);
-            filter: brightness(0.8);
-          }
+          border-radius: 50%;
+          overflow: hidden;
+          z-index: 1;
+          transition:
+            filter 0.3s,
+            transform 0.3s;
         }
         .cover-shadow {
-          opacity: 1;
+          opacity: 0;
+          position: absolute;
+          border-radius: 50%;
+          overflow: hidden;
+          top: 20%;
+          width: 80%;
+          height: auto;
+          aspect-ratio: 1/1;
+          filter: blur(10px) opacity(0.5);
+          transform: scale(0.92, 0.96);
+          z-index: 0;
+          transition: opacity 0.3s;
+          :deep(img) {
+            opacity: 1;
+          }
         }
         .n-icon {
-          transform: scale(1);
-          opacity: 1;
+          position: absolute;
+          font-size: 40px;
+          color: #fff;
+          transform: scale(0.6);
+          opacity: 0;
+          z-index: 2;
+          transition:
+            opacity 0.3s,
+            transform 0.3s;
         }
-      }
-    }
-    &:active {
-      transform: scale(0.98);
-    }
-    &.no-cover {
-      background-color: var(--surface-container-hex);
-      border: 2px solid rgba(var(--primary), 0.12);
-      padding: 12px 0;
-      &:hover {
-        border-color: rgba(var(--primary), 0.58);
+        .n-skeleton {
+          height: 100%;
+        }
       }
       .cover-data {
-        height: 100%;
-        justify-content: center;
+        display: flex;
+        align-items: center;
+        flex-direction: column;
+        padding: 0 12px;
         .name {
-          font-weight: bold;
+          font-size: 16px;
+          margin-bottom: 4px;
+        }
+        :deep(.n-skeleton) {
+          &:first-child {
+            margin-bottom: 12px;
+          }
+        }
+      }
+      &:hover {
+        .cover {
+          .cover-img {
+            box-shadow: 0 4px 16px #00000020;
+            :deep(img) {
+              transform: scale(1.1);
+              filter: brightness(0.8);
+            }
+          }
+          .cover-shadow {
+            opacity: 1;
+          }
+          .n-icon {
+            transform: scale(1);
+            opacity: 1;
+          }
+        }
+      }
+      &:active {
+        transform: scale(0.98);
+      }
+      &.no-cover {
+        background-color: var(--surface-container-hex);
+        border: 2px solid rgba(var(--primary), 0.12);
+        padding: 12px 0;
+        &:hover {
+          border-color: rgba(var(--primary), 0.58);
+        }
+        .cover-data {
+          height: 100%;
+          justify-content: center;
+          .name {
+            font-weight: bold;
+          }
         }
       }
     }
+    .load-more {
+      margin: 20px 0;
+    }
   }
-  .load-more {
-    margin: 20px 0;
+  .n-empty {
+    margin-top: 60px;
   }
-}
-.n-empty {
-  margin-top: 60px;
-}
 </style>

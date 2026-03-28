@@ -295,379 +295,380 @@
 </template>
 
 <script setup lang="ts">
-import type { SongType } from "@/types/main";
-import type { WikiViewModel, UserRecord, SongWikiData, ListenData, SheetData } from "./types";
-import { usePlayerController } from "@/core/player/PlayerController";
-import { renderToolbar } from "@/utils/meta";
-import {
-  songDetail,
-  songWikiSummary,
-  songSheetList,
-  songSheetPreview,
-  songFirstListenInfo,
-} from "@/api/song";
-import { formatSongsList, removeBrackets } from "@/utils/format";
-import { useSettingStore } from "@/stores";
-import dayjs from "dayjs";
-import { useSongMenu } from "@/composables/useSongMenu";
-import { formatTimestamp } from "@/utils/time";
+  import type { SongType } from "@/types/main";
+  import type { WikiViewModel, UserRecord, SongWikiData, ListenData, SheetData } from "./types";
+  import { usePlayerController } from "@/core/player/PlayerController";
+  import { renderToolbar } from "@/utils/meta";
+  import {
+    songDetail,
+    songWikiSummary,
+    songSheetList,
+    songSheetPreview,
+    songFirstListenInfo,
+  } from "@/api/song";
+  import { formatSongsList, removeBrackets } from "@/utils/format";
+  import { useSettingStore } from "@/stores";
+  import dayjs from "dayjs";
+  import { useSongMenu } from "@/composables/useSongMenu";
+  import { formatTimestamp } from "@/utils/time";
 
-const route = useRoute();
-const player = usePlayerController();
-const settingStore = useSettingStore();
+  const route = useRoute();
+  const player = usePlayerController();
+  const settingStore = useSettingStore();
 
-const { getMenuOptions } = useSongMenu();
+  const { getMenuOptions } = useSongMenu();
 
-const loading = ref(true);
-const currentSongId = ref<number>(0);
-const currentSong = ref<SongType | null>(null);
-const viewModel = ref<WikiViewModel | null>(null);
-const similarSongsList = ref<SongType[]>([]);
-const sheetLoading = ref<Record<number, boolean>>({});
-const currentRequestToken = ref(0);
+  const loading = ref(true);
+  const currentSongId = ref<number>(0);
+  const currentSong = ref<SongType | null>(null);
+  const viewModel = ref<WikiViewModel | null>(null);
+  const similarSongsList = ref<SongType[]>([]);
+  const sheetLoading = ref<Record<number, boolean>>({});
+  const currentRequestToken = ref(0);
 
-const publishTime = computed(() => {
-  const createTime = currentSong.value?.createTime;
-  return typeof createTime === "number" ? formatTimestamp(createTime, "YYYY-MM-DD") : "";
-});
+  const publishTime = computed(() => {
+    const createTime = currentSong.value?.createTime;
+    return typeof createTime === "number" ? formatTimestamp(createTime, "YYYY-MM-DD") : "";
+  });
 
-// 简单的转换逻辑，避免过多判断
-const normalizeWikiData = (
-  wiki: SongWikiData | null,
-  listen: ListenData | null,
-  sheets: SheetData | null,
-): WikiViewModel => {
-  const model: WikiViewModel = {
-    basicInfo: [],
-    sheets: [],
-    awards: [],
-    credentials: [],
-    similarSongs: [],
-  };
-
-  const record: UserRecord = {};
-  const firstDto = listen?.musicFirstListenDto || wiki?.musicFirstListenDto;
-  if (firstDto) {
-    const listenDate = firstDto.date
-      ? firstDto.date
-      : firstDto.listenTime
-        ? dayjs(firstDto.listenTime).format("YYYY.MM.DD")
-        : "";
-
-    record.firstListen = {
-      season: firstDto.season,
-      period: firstDto.period,
-      date: listenDate,
-      meetDurationDesc: firstDto.meetDurationDesc,
-      sceneText: firstDto.sceneText,
+  // 简单的转换逻辑，避免过多判断
+  const normalizeWikiData = (
+    wiki: SongWikiData | null,
+    listen: ListenData | null,
+    sheets: SheetData | null,
+  ): WikiViewModel => {
+    const model: WikiViewModel = {
+      basicInfo: [],
+      sheets: [],
+      awards: [],
+      credentials: [],
+      similarSongs: [],
     };
-  }
-  const totalDto = listen?.musicTotalPlayDto || wiki?.musicTotalPlayDto;
-  if (totalDto) record.totalPlay = { playCount: totalDto.playCount, text: totalDto.text };
 
-  const likeDto = listen?.musicLikeSongDto || wiki?.musicLikeSongDto;
-  if (likeDto)
-    record.likeSong = { like: likeDto.like, text: likeDto.text, redDesc: likeDto.redDesc };
+    const record: UserRecord = {};
+    const firstDto = listen?.musicFirstListenDto || wiki?.musicFirstListenDto;
+    if (firstDto) {
+      const listenDate = firstDto.date
+        ? firstDto.date
+        : firstDto.listenTime
+          ? dayjs(firstDto.listenTime).format("YYYY.MM.DD")
+          : "";
 
-  if (Object.keys(record).length) model.story = record;
+      record.firstListen = {
+        season: firstDto.season,
+        period: firstDto.period,
+        date: listenDate,
+        meetDurationDesc: firstDto.meetDurationDesc,
+        sceneText: firstDto.sceneText,
+      };
+    }
+    const totalDto = listen?.musicTotalPlayDto || wiki?.musicTotalPlayDto;
+    if (totalDto) record.totalPlay = { playCount: totalDto.playCount, text: totalDto.text };
 
-  const sheetList = sheets?.musicSheetSimpleInfoVOS;
-  if (Array.isArray(sheetList)) {
-    model.sheets = sheetList.map((s) => ({
-      id: s.id,
-      name: s.name,
-      playVersion: s.playVersion,
-      coverImageUrl: s.coverImageUrl,
-      images: [],
-    }));
-  }
+    const likeDto = listen?.musicLikeSongDto || wiki?.musicLikeSongDto;
+    if (likeDto)
+      record.likeSong = { like: likeDto.like, text: likeDto.text, redDesc: likeDto.redDesc };
 
-  const blocks = wiki?.blocks || [];
-  for (const block of blocks) {
-    if (!block.creatives) continue;
+    if (Object.keys(record).length) model.story = record;
 
-    if (block.code === "SONG_PLAY_ABOUT_SONG_BASIC") {
-      for (const creative of block.creatives) {
-        const title = creative.uiElement?.mainTitle?.title;
-        if (!title) continue;
+    const sheetList = sheets?.musicSheetSimpleInfoVOS;
+    if (Array.isArray(sheetList)) {
+      model.sheets = sheetList.map((s) => ({
+        id: s.id,
+        name: s.name,
+        playVersion: s.playVersion,
+        coverImageUrl: s.coverImageUrl,
+        images: [],
+      }));
+    }
 
-        const type = creative.creativeType;
-        if (["songTag", "songBizTag"].includes(type) && creative.resources) {
-          const tags = creative.resources
-            .map((r) => r.uiElement?.mainTitle?.title)
-            .filter(Boolean) as string[];
-          if (tags.length) model.basicInfo.push({ label: title, type: "tags", tags });
-        } else if (["language", "bpm"].includes(type)) {
-          const text = creative.uiElement?.textLinks?.[0]?.text;
-          if (text) model.basicInfo.push({ label: title, type: "text", value: text });
-        } else if (["songAward", "entertainment"].includes(type)) {
-          const items =
-            creative.resources?.map((r) => ({
-              title: r.uiElement?.mainTitle?.title || "",
-              subTitle: r.uiElement?.subTitles?.map((s) => s.title).join("/") || "",
-              image: r.uiElement?.images?.[0]?.imageUrl,
-            })) || [];
-          if (type === "songAward") model.awards.push(...items);
-          else model.credentials.push(...items);
+    const blocks = wiki?.blocks || [];
+    for (const block of blocks) {
+      if (!block.creatives) continue;
+
+      if (block.code === "SONG_PLAY_ABOUT_SONG_BASIC") {
+        for (const creative of block.creatives) {
+          const title = creative.uiElement?.mainTitle?.title;
+          if (!title) continue;
+
+          const type = creative.creativeType;
+          if (["songTag", "songBizTag"].includes(type) && creative.resources) {
+            const tags = creative.resources
+              .map((r) => r.uiElement?.mainTitle?.title)
+              .filter(Boolean) as string[];
+            if (tags.length) model.basicInfo.push({ label: title, type: "tags", tags });
+          } else if (["language", "bpm"].includes(type)) {
+            const text = creative.uiElement?.textLinks?.[0]?.text;
+            if (text) model.basicInfo.push({ label: title, type: "text", value: text });
+          } else if (["songAward", "entertainment"].includes(type)) {
+            const items =
+              creative.resources?.map((r) => ({
+                title: r.uiElement?.mainTitle?.title || "",
+                subTitle: r.uiElement?.subTitles?.map((s) => s.title).join("/") || "",
+                image: r.uiElement?.images?.[0]?.imageUrl,
+              })) || [];
+            if (type === "songAward") model.awards.push(...items);
+            else model.credentials.push(...items);
+          }
+        }
+      } else if (block.code === "SONG_PLAY_ABOUT_SIMILAR_SONG") {
+        for (const creative of block.creatives) {
+          creative.resources?.forEach((r) => {
+            if (r.resourceId) model.similarSongs.push(Number(r.resourceId));
+          });
         }
       }
-    } else if (block.code === "SONG_PLAY_ABOUT_SIMILAR_SONG") {
-      for (const creative of block.creatives) {
-        creative.resources?.forEach((r) => {
-          if (r.resourceId) model.similarSongs.push(Number(r.resourceId));
-        });
+    }
+
+    return model;
+  };
+
+  // 获取歌曲信息
+  const fetchData = async (id?: number) => {
+    id = id ?? Number(route.query.id);
+    if (!id || id === currentSongId.value) return;
+    const token = ++currentRequestToken.value;
+    loading.value = true;
+    currentSongId.value = id;
+    viewModel.value = null;
+    similarSongsList.value = [];
+    sheetLoading.value = {};
+    try {
+      const detailRes = await songDetail(id);
+      if (!detailRes.songs?.[0]) throw new Error("Song not found");
+      if (token !== currentRequestToken.value) return;
+      currentSong.value = formatSongsList(detailRes.songs)[0];
+      const [wikiRes, listenRes, sheetRes] = await Promise.allSettled([
+        songWikiSummary(id),
+        songFirstListenInfo(id),
+        songSheetList(id),
+      ]);
+      if (token !== currentRequestToken.value) return;
+      // 获取歌曲信息
+      const wikiData = wikiRes.status === "fulfilled" ? wikiRes.value.data || wikiRes.value : {};
+      const listenData =
+        listenRes.status === "fulfilled"
+          ? listenRes.value.data?.data || listenRes.value.data || listenRes.value
+          : {};
+      const sheetData =
+        sheetRes.status === "fulfilled" ? sheetRes.value.data || sheetRes.value : {};
+      // 归一化数据
+      viewModel.value = normalizeWikiData(wikiData, listenData, sheetData);
+      // 获取相似歌曲
+      if (viewModel.value.similarSongs.length > 0) {
+        try {
+          const sims = await songDetail(viewModel.value.similarSongs);
+          if (token !== currentRequestToken.value) return;
+          if (sims.songs) similarSongsList.value = formatSongsList(sims.songs);
+        } catch (e) {
+          console.warn("Failed to load similar songs", e);
+        }
+      }
+    } catch (error) {
+      console.error("Fetch wiki failed", error);
+      window.$message.error("加载信息失败");
+    } finally {
+      if (token === currentRequestToken.value) {
+        loading.value = false;
       }
     }
-  }
+  };
 
-  return model;
-};
-
-// 获取歌曲信息
-const fetchData = async (id?: number) => {
-  id = id ?? Number(route.query.id);
-  if (!id || id === currentSongId.value) return;
-  const token = ++currentRequestToken.value;
-  loading.value = true;
-  currentSongId.value = id;
-  viewModel.value = null;
-  similarSongsList.value = [];
-  sheetLoading.value = {};
-  try {
-    const detailRes = await songDetail(id);
-    if (!detailRes.songs?.[0]) throw new Error("Song not found");
-    if (token !== currentRequestToken.value) return;
-    currentSong.value = formatSongsList(detailRes.songs)[0];
-    const [wikiRes, listenRes, sheetRes] = await Promise.allSettled([
-      songWikiSummary(id),
-      songFirstListenInfo(id),
-      songSheetList(id),
-    ]);
-    if (token !== currentRequestToken.value) return;
-    // 获取歌曲信息
-    const wikiData = wikiRes.status === "fulfilled" ? wikiRes.value.data || wikiRes.value : {};
-    const listenData =
-      listenRes.status === "fulfilled"
-        ? listenRes.value.data?.data || listenRes.value.data || listenRes.value
-        : {};
-    const sheetData = sheetRes.status === "fulfilled" ? sheetRes.value.data || sheetRes.value : {};
-    // 归一化数据
-    viewModel.value = normalizeWikiData(wikiData, listenData, sheetData);
-    // 获取相似歌曲
-    if (viewModel.value.similarSongs.length > 0) {
-      try {
-        const sims = await songDetail(viewModel.value.similarSongs);
-        if (token !== currentRequestToken.value) return;
-        if (sims.songs) similarSongsList.value = formatSongsList(sims.songs);
-      } catch (e) {
-        console.warn("Failed to load similar songs", e);
-      }
+  // 展开乐谱
+  const handleSheetExpand = async ({ name, expanded }: { name: number; expanded: boolean }) => {
+    if (!expanded || !viewModel.value) return;
+    const sheet = viewModel.value.sheets[name];
+    if (!sheet || sheet.images?.length) return;
+    sheetLoading.value[sheet.id] = true;
+    try {
+      const res = await songSheetPreview(sheet.id);
+      const data = res?.data ?? res;
+      const rawList = Array.isArray(data) ? data : data.pageList || data.pages || [];
+      sheet.images = rawList
+        .map((item: any) => (typeof item === "string" ? item : item.pageImageUrl || item.url))
+        .filter(Boolean);
+    } catch (e) {
+      window.$message.error("加载乐谱失败");
+    } finally {
+      sheetLoading.value[sheet.id] = false;
     }
-  } catch (error) {
-    console.error("Fetch wiki failed", error);
-    window.$message.error("加载信息失败");
-  } finally {
-    if (token === currentRequestToken.value) {
-      loading.value = false;
-    }
-  }
-};
+  };
 
-// 展开乐谱
-const handleSheetExpand = async ({ name, expanded }: { name: number; expanded: boolean }) => {
-  if (!expanded || !viewModel.value) return;
-  const sheet = viewModel.value.sheets[name];
-  if (!sheet || sheet.images?.length) return;
-  sheetLoading.value[sheet.id] = true;
-  try {
-    const res = await songSheetPreview(sheet.id);
-    const data = res?.data ?? res;
-    const rawList = Array.isArray(data) ? data : data.pageList || data.pages || [];
-    sheet.images = rawList
-      .map((item: any) => (typeof item === "string" ? item : item.pageImageUrl || item.url))
-      .filter(Boolean);
-  } catch (e) {
-    window.$message.error("加载乐谱失败");
-  } finally {
-    sheetLoading.value[sheet.id] = false;
-  }
-};
+  // 播放歌曲
+  const handlePlay = () => {
+    if (currentSong.value) player.addNextSong(currentSong.value, true);
+  };
 
-// 播放歌曲
-const handlePlay = () => {
-  if (currentSong.value) player.addNextSong(currentSong.value, true);
-};
+  onActivated(() => fetchData());
 
-onActivated(() => fetchData());
-
-// 监听路由更新
-onBeforeRouteUpdate((to) => {
-  fetchData(Number(to.query.id));
-});
+  // 监听路由更新
+  onBeforeRouteUpdate((to) => {
+    fetchData(Number(to.query.id));
+  });
 </script>
 
 <style scoped lang="scss">
-.song-wiki {
-  width: 100%;
-  height: 100%;
-  padding-bottom: 80px;
-  .loading-skeleton {
-    margin: 0 auto;
-    padding-top: 12px;
-    .header-skeleton {
+  .song-wiki {
+    width: 100%;
+    height: 100%;
+    padding-bottom: 80px;
+    .loading-skeleton {
+      margin: 0 auto;
+      padding-top: 12px;
+      .header-skeleton {
+        display: flex;
+        height: 240px;
+        margin-bottom: 32px;
+        padding: 12px 0 24px 0;
+        gap: 20px;
+        .info-skeleton {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          height: 100%;
+        }
+        @media (max-width: 600px) {
+          flex-direction: column;
+          height: auto;
+          align-items: center;
+          gap: 20px;
+          .info-skeleton {
+            width: 100%;
+            align-items: center;
+          }
+        }
+      }
+    }
+    .header {
       display: flex;
-      height: 240px;
       margin-bottom: 32px;
+      height: 240px;
       padding: 12px 0 24px 0;
-      gap: 20px;
-      .info-skeleton {
-        flex: 1;
+      .cover {
+        height: 100%;
+        aspect-ratio: 1/1;
+        width: auto;
+        flex-shrink: 0;
+        margin-right: 20px;
+        position: relative;
+        :deep(img) {
+          width: 100%;
+          height: 100%;
+        }
+        .cover-img {
+          position: relative;
+          z-index: 1;
+          border-radius: 8px;
+          width: 100%;
+          height: 100%;
+          overflow: hidden;
+        }
+        .cover-shadow {
+          position: absolute;
+          top: 6px;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          filter: blur(12px) opacity(0.6);
+          transform: scale(0.92, 0.96);
+          z-index: 0;
+          border-radius: 8px;
+          object-fit: cover;
+        }
+      }
+      .data {
         display: flex;
         flex-direction: column;
+        flex: 1;
         height: 100%;
+        padding-right: 60px;
+        .name {
+          font-size: 30px;
+          font-weight: bold;
+          margin: 0 0 12px 0;
+          line-height: 1.2;
+        }
+        .meta {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          font-size: 14px;
+          opacity: 0.8;
+          .item {
+            display: flex;
+            align-items: center;
+            flex-wrap: nowrap;
+            .n-icon {
+              font-size: 20px;
+              margin-right: 4px;
+              flex-shrink: 0;
+            }
+            .clickable-text {
+              cursor: pointer;
+              &:hover {
+                color: var(--primary-hex);
+              }
+            }
+          }
+        }
+        .actions {
+          margin-top: auto;
+          :deep(.n-button) {
+            height: 40px;
+            transition: all 0.3s var(--n-bezier);
+          }
+          .more {
+            width: 40px;
+          }
+          @media (max-width: 768px) {
+            :deep(.n-button) {
+              height: 34px;
+              font-size: 13px;
+              padding: 0 14px;
+              .n-icon {
+                font-size: 16px;
+              }
+            }
+          }
+        }
       }
       @media (max-width: 600px) {
         flex-direction: column;
         height: auto;
         align-items: center;
+        text-align: center;
         gap: 20px;
-        .info-skeleton {
-          width: 100%;
+        .cover {
+          margin-right: 0;
+          max-width: calc(100% - 60%);
+        }
+        .data {
+          padding-right: 0;
           align-items: center;
+          .actions {
+            margin-top: 12px;
+          }
         }
       }
     }
-  }
-  .header {
-    display: flex;
-    margin-bottom: 32px;
-    height: 240px;
-    padding: 12px 0 24px 0;
-    .cover {
-      height: 100%;
-      aspect-ratio: 1/1;
-      width: auto;
-      flex-shrink: 0;
-      margin-right: 20px;
-      position: relative;
-      :deep(img) {
-        width: 100%;
-        height: 100%;
-      }
-      .cover-img {
-        position: relative;
-        z-index: 1;
-        border-radius: 8px;
-        width: 100%;
-        height: 100%;
-        overflow: hidden;
-      }
-      .cover-shadow {
-        position: absolute;
-        top: 6px;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        filter: blur(12px) opacity(0.6);
-        transform: scale(0.92, 0.96);
-        z-index: 0;
-        border-radius: 8px;
-        object-fit: cover;
-      }
-    }
-    .data {
+    .wiki-content {
       display: flex;
       flex-direction: column;
-      flex: 1;
-      height: 100%;
-      padding-right: 60px;
-      .name {
-        font-size: 30px;
-        font-weight: bold;
-        margin: 0 0 12px 0;
-        line-height: 1.2;
-      }
-      .meta {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        font-size: 14px;
-        opacity: 0.8;
-        .item {
-          display: flex;
-          align-items: center;
-          flex-wrap: nowrap;
-          .n-icon {
-            font-size: 20px;
-            margin-right: 4px;
-            flex-shrink: 0;
-          }
-          .clickable-text {
-            cursor: pointer;
-            &:hover {
-              color: var(--primary-hex);
-            }
-          }
-        }
-      }
-      .actions {
-        margin-top: auto;
-        :deep(.n-button) {
-          height: 40px;
-          transition: all 0.3s var(--n-bezier);
-        }
-        .more {
-          width: 40px;
-        }
-        @media (max-width: 768px) {
-          :deep(.n-button) {
-            height: 34px;
-            font-size: 13px;
-            padding: 0 14px;
-            .n-icon {
-              font-size: 16px;
-            }
-          }
-        }
-      }
+      gap: 40px;
     }
-    @media (max-width: 600px) {
-      flex-direction: column;
-      height: auto;
-      align-items: center;
-      text-align: center;
-      gap: 20px;
-      .cover {
-        margin-right: 0;
-        max-width: calc(100% - 60%);
-      }
-      .data {
-        padding-right: 0;
-        align-items: center;
-        .actions {
-          margin-top: 12px;
-        }
-      }
+    .loading-container {
+      display: flex;
+      justify-content: center;
+      padding: 20px;
     }
   }
-  .wiki-content {
-    display: flex;
-    flex-direction: column;
-    gap: 40px;
+  .text-hidden {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
-  .loading-container {
-    display: flex;
-    justify-content: center;
-    padding: 20px;
+  .main-text {
+    font-size: 16px;
+    font-weight: bold;
   }
-}
-.text-hidden {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.main-text {
-  font-size: 16px;
-  font-weight: bold;
-}
 </style>

@@ -24,40 +24,40 @@
 </template>
 
 <script setup lang="ts">
-import { useSettingStore } from "@/stores";
-import type { SettingState } from "@/stores/setting";
+  import { useSettingStore } from "@/stores";
+  import type { SettingState } from "@/stores/setting";
 
-const settingStore = useSettingStore();
+  const settingStore = useSettingStore();
 
-type PlaylistPageElementKey = keyof SettingState["playlistPageElements"];
-type Item = { label: string; key: PlaylistPageElementKey };
+  type PlaylistPageElementKey = keyof SettingState["playlistPageElements"];
+  type Item = { label: string; key: PlaylistPageElementKey };
 
-const items: Item[] = [
-  { label: "显示标签", key: "tags" },
-  { label: "显示创建者/艺术家", key: "creator" },
-  { label: "显示创建/更新时间", key: "time" },
-  { label: "显示描述", key: "description" },
-];
+  const items: Item[] = [
+    { label: "显示标签", key: "tags" },
+    { label: "显示创建者/艺术家", key: "creator" },
+    { label: "显示创建/更新时间", key: "time" },
+    { label: "显示描述", key: "description" },
+  ];
 
-const updateSetting = (key: PlaylistPageElementKey, val: boolean) => {
-  settingStore.playlistPageElements[key] = val;
-};
+  const updateSetting = (key: PlaylistPageElementKey, val: boolean) => {
+    settingStore.playlistPageElements[key] = val;
+  };
 </script>
 
 <style scoped lang="scss">
-.list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  .item {
-    border-radius: 8px;
-    .name {
-      font-size: 16px;
-      line-height: normal;
-    }
-    .n-switch {
-      margin-left: auto;
+  .list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    .item {
+      border-radius: 8px;
+      .name {
+        font-size: 16px;
+        line-height: normal;
+      }
+      .n-switch {
+        margin-left: auto;
+      }
     }
   }
-}
 </style>

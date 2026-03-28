@@ -78,106 +78,106 @@
 </template>
 
 <script setup lang="ts">
-import { useSettingStore } from "@/stores";
+  import { useSettingStore } from "@/stores";
 
-const emit = defineEmits(["close"]);
+  const emit = defineEmits(["close"]);
 
-const settingStore = useSettingStore();
+  const settingStore = useSettingStore();
 
-const enableExcludeComments = ref(settingStore.enableExcludeComments);
-const filterKeywords = ref<string[]>([]);
-const filterRegexes = ref<string[]>([]);
-const page = ref("keywords");
+  const enableExcludeComments = ref(settingStore.enableExcludeComments);
+  const filterKeywords = ref<string[]>([]);
+  const filterRegexes = ref<string[]>([]);
+  const page = ref("keywords");
 
-// 清空关键词
-const clearKeywords = () => {
-  filterKeywords.value = [];
-};
-
-// 清空正则表达式
-const clearRegexes = () => {
-  filterRegexes.value = [];
-};
-
-// 清空全部
-const clearAll = () => {
-  filterKeywords.value = [];
-  filterRegexes.value = [];
-};
-
-// 导出规则
-const exportFilters = () => {
-  const data = {
-    keywords: settingStore.excludeCommentKeywords || [],
-    regexes: settingStore.excludeCommentRegexes || [],
+  // 清空关键词
+  const clearKeywords = () => {
+    filterKeywords.value = [];
   };
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "splayer-comment-filters.json";
-  a.click();
-  URL.revokeObjectURL(url);
-};
 
-// 导入规则
-const importFilters = () => {
-  const input = document.createElement("input");
-  input.type = "file";
-  input.accept = ".json";
-  input.onchange = (e: any) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const data = JSON.parse(e.target?.result as string);
-        if (data.keywords && Array.isArray(data.keywords)) {
-          filterKeywords.value = data.keywords;
-        }
-        if (data.regexes && Array.isArray(data.regexes)) {
-          filterRegexes.value = data.regexes;
-        }
-        window.$message.success("规则导入成功");
-      } catch (error) {
-        console.error("Import filters error:", error);
-        window.$message.error("规则文件解析失败");
-      }
+  // 清空正则表达式
+  const clearRegexes = () => {
+    filterRegexes.value = [];
+  };
+
+  // 清空全部
+  const clearAll = () => {
+    filterKeywords.value = [];
+    filterRegexes.value = [];
+  };
+
+  // 导出规则
+  const exportFilters = () => {
+    const data = {
+      keywords: settingStore.excludeCommentKeywords || [],
+      regexes: settingStore.excludeCommentRegexes || [],
     };
-    reader.readAsText(file);
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "splayer-comment-filters.json";
+    a.click();
+    URL.revokeObjectURL(url);
   };
-  input.click();
-};
 
-// 保存过滤
-const saveFilter = () => {
-  settingStore.enableExcludeComments = enableExcludeComments.value;
-  settingStore.excludeCommentKeywords = filterKeywords.value;
-  settingStore.excludeCommentRegexes = filterRegexes.value;
-  window.$message.success("设置已保存");
-  handleClose();
-};
+  // 导入规则
+  const importFilters = () => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".json";
+    input.onchange = (e: any) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = JSON.parse(e.target?.result as string);
+          if (data.keywords && Array.isArray(data.keywords)) {
+            filterKeywords.value = data.keywords;
+          }
+          if (data.regexes && Array.isArray(data.regexes)) {
+            filterRegexes.value = data.regexes;
+          }
+          window.$message.success("规则导入成功");
+        } catch (error) {
+          console.error("Import filters error:", error);
+          window.$message.error("规则文件解析失败");
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  };
 
-const handleClose = () => {
-  emit("close");
-};
+  // 保存过滤
+  const saveFilter = () => {
+    settingStore.enableExcludeComments = enableExcludeComments.value;
+    settingStore.excludeCommentKeywords = filterKeywords.value;
+    settingStore.excludeCommentRegexes = filterRegexes.value;
+    window.$message.success("设置已保存");
+    handleClose();
+  };
 
-onMounted(() => {
-  enableExcludeComments.value = settingStore.enableExcludeComments;
-  filterKeywords.value = [...(settingStore.excludeCommentKeywords || [])];
-  filterRegexes.value = [...(settingStore.excludeCommentRegexes || [])];
-});
+  const handleClose = () => {
+    emit("close");
+  };
+
+  onMounted(() => {
+    enableExcludeComments.value = settingStore.enableExcludeComments;
+    filterKeywords.value = [...(settingStore.excludeCommentKeywords || [])];
+    filterRegexes.value = [...(settingStore.excludeCommentRegexes || [])];
+  });
 </script>
 
 <style scoped lang="scss">
-.exclude-comment-modal {
-  padding: 0;
-  .switch-card {
-    width: 100%;
-    border-radius: 8px;
-    .n-text {
-      font-size: 16px;
+  .exclude-comment-modal {
+    padding: 0;
+    .switch-card {
+      width: 100%;
+      border-radius: 8px;
+      .n-text {
+        font-size: 16px;
+      }
     }
   }
-}
 </style>

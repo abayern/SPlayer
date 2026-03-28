@@ -122,136 +122,139 @@
 </template>
 
 <script setup lang="ts">
-import { useMusicStore, useStatusStore, useSettingStore, useDataStore } from "@/stores";
-import { useBlobURLManager } from "@/core/resource/BlobURLManager";
-import { isElectron } from "@/utils/env";
-import { useMobile } from "@/composables/useMobile";
-import { useInit } from "@/composables/useInit";
+  import { useMusicStore, useStatusStore, useSettingStore, useDataStore } from "@/stores";
+  import { useBlobURLManager } from "@/core/resource/BlobURLManager";
+  import { isElectron } from "@/utils/env";
+  import { useMobile } from "@/composables/useMobile";
+  import { useInit } from "@/composables/useInit";
 
-const musicStore = useMusicStore();
-const statusStore = useStatusStore();
-const settingStore = useSettingStore();
-const dataStore = useDataStore();
+  const musicStore = useMusicStore();
+  const statusStore = useStatusStore();
+  const settingStore = useSettingStore();
+  const dataStore = useDataStore();
 
-const blobURLManager = useBlobURLManager();
+  const blobURLManager = useBlobURLManager();
 
-const { isDesktop, isMobile } = useMobile();
+  const { isDesktop, isMobile } = useMobile();
 
-// 主内容
-const contentRef = ref<HTMLElement | null>(null);
+  // 主内容
+  const contentRef = ref<HTMLElement | null>(null);
 
-// 主内容高度
-const { height: contentHeight } = useElementSize(contentRef);
+  // 主内容高度
+  const { height: contentHeight } = useElementSize(contentRef);
 
-// 加载背景图
-const loadBackgroundImage = async () => {
-  if (statusStore.backgroundImageUrl) return;
-  if (statusStore.themeBackgroundMode === "image" || statusStore.themeBackgroundMode === "video") {
-    const blob = await dataStore.getBackgroundImage();
-    if (blob) {
-      const arrayBuffer = await blob.arrayBuffer();
-      statusStore.backgroundImageUrl = blobURLManager.createBlobURL(
-        arrayBuffer,
-        blob.type,
-        "background-image",
-      );
+  // 加载背景图
+  const loadBackgroundImage = async () => {
+    if (statusStore.backgroundImageUrl) return;
+    if (
+      statusStore.themeBackgroundMode === "image" ||
+      statusStore.themeBackgroundMode === "video"
+    ) {
+      const blob = await dataStore.getBackgroundImage();
+      if (blob) {
+        const arrayBuffer = await blob.arrayBuffer();
+        statusStore.backgroundImageUrl = blobURLManager.createBlobURL(
+          arrayBuffer,
+          blob.type,
+          "background-image",
+        );
+      }
     }
-  }
-};
+  };
 
-watchEffect(() => {
-  statusStore.mainContentHeight = contentHeight.value;
-});
+  watchEffect(() => {
+    statusStore.mainContentHeight = contentHeight.value;
+  });
 
-// 初始化
-useInit();
+  // 初始化
+  useInit();
 
-onMounted(() => {
-  loadBackgroundImage();
-  if (!isElectron) {
-    window.addEventListener("beforeunload", (event) => {
-      event.preventDefault();
-      // 释放所有 blob URL
-      blobURLManager.revokeAllBlobURLs();
-      event.returnValue = "";
-    });
-  }
-});
+  onMounted(() => {
+    loadBackgroundImage();
+    if (!isElectron) {
+      window.addEventListener("beforeunload", (event) => {
+        event.preventDefault();
+        // 释放所有 blob URL
+        blobURLManager.revokeAllBlobURLs();
+        event.returnValue = "";
+      });
+    }
+  });
 </script>
 
 <style lang="scss" scoped>
-#app-layout {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-}
-
-.background-container {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: -1;
-  pointer-events: none;
-  overflow: hidden;
-  .background-image {
-    position: absolute;
-    top: 0;
-    left: 0;
+  #app-layout {
     width: 100%;
     height: 100%;
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    transform-origin: center center;
+    display: flex;
+    flex-direction: column;
+    position: relative;
   }
-  .background-mask {
-    position: absolute;
+
+  .background-container {
+    position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
-  }
-}
-
-#main {
-  flex: 1;
-  height: 100%;
-  transition:
-    transform 0.3s var(--n-bezier),
-    opacity 0.3s var(--n-bezier);
-  #main-layout {
-    // background-color: rgba(var(--background), 0.58);
-    background-color: rgba(var(--background));
-  }
-  #main-content {
-    top: 70px;
-    background-color: transparent;
-    transition: bottom 0.3s;
-    .router-view {
-      position: relative;
+    width: 100vw;
+    height: 100vh;
+    z-index: -1;
+    pointer-events: none;
+    overflow: hidden;
+    .background-image {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
       height: 100%;
-      &.n-result {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      transform-origin: center center;
+    }
+    .background-mask {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+  }
+
+  #main {
+    flex: 1;
+    height: 100%;
+    transition:
+      transform 0.3s var(--n-bezier),
+      opacity 0.3s var(--n-bezier);
+    #main-layout {
+      // background-color: rgba(var(--background), 0.58);
+      background-color: rgba(var(--background));
+    }
+    #main-content {
+      top: 70px;
+      background-color: transparent;
+      transition: bottom 0.3s;
+      .router-view {
+        position: relative;
+        height: 100%;
+        &.n-result {
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+        }
+      }
+    }
+    &.show-player {
+      #main-content {
+        bottom: 80px;
+      }
+    }
+    &.show-full-player {
+      opacity: 0;
+      transform: scale(0.9);
+      #main-header {
+        -webkit-app-region: no-drag;
       }
     }
   }
-  &.show-player {
-    #main-content {
-      bottom: 80px;
-    }
-  }
-  &.show-full-player {
-    opacity: 0;
-    transform: scale(0.9);
-    #main-header {
-      -webkit-app-region: no-drag;
-    }
-  }
-}
 </style>

@@ -24,40 +24,40 @@
 </template>
 
 <script setup lang="ts">
-import { useSettingStore } from "@/stores";
-import { useSortable } from "@vueuse/integrations/useSortable";
-import type { Options } from "sortablejs";
+  import { useSettingStore } from "@/stores";
+  import { useSortable } from "@vueuse/integrations/useSortable";
+  import type { Options } from "sortablejs";
 
-const settingStore = useSettingStore();
+  const settingStore = useSettingStore();
 
-const sortableRef = ref<HTMLElement | null>(null);
+  const sortableRef = ref<HTMLElement | null>(null);
 
-// 拖拽
-useSortable(sortableRef, settingStore.songUnlockServer, {
-  animation: 150,
-  handle: ".n-icon",
-} as Options);
+  // 拖拽
+  useSortable(sortableRef, settingStore.songUnlockServer, {
+    animation: 150,
+    handle: ".n-icon",
+  } as Options);
 </script>
 
 <style scoped lang="scss">
-.sortable-list {
-  margin-top: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  .sortable-item {
-    border-radius: 8px;
-    .n-icon {
-      font-size: 16px;
-      cursor: move;
-    }
-    .name {
-      font-size: 16px;
-      line-height: normal;
-    }
-    .n-switch {
-      margin-left: auto;
+  .sortable-list {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    .sortable-item {
+      border-radius: 8px;
+      .n-icon {
+        font-size: 16px;
+        cursor: move;
+      }
+      .name {
+        font-size: 16px;
+        line-height: normal;
+      }
+      .n-switch {
+        margin-left: auto;
+      }
     }
   }
-}
 </style>

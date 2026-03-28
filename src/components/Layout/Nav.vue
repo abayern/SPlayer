@@ -143,245 +143,245 @@
 </template>
 
 <script setup lang="ts">
-import type { DropdownOption } from "naive-ui";
-import { useSettingStore, useStatusStore } from "@/stores";
-import { renderIcon } from "@/utils/helper";
-import { openSetting, openThemeConfig, openScalingModal, openUpdateApp } from "@/utils/modal";
-import { isDev, isElectron } from "@/utils/env";
-import { useMobile } from "@/composables/useMobile";
+  import type { DropdownOption } from "naive-ui";
+  import { useSettingStore, useStatusStore } from "@/stores";
+  import { renderIcon } from "@/utils/helper";
+  import { openSetting, openThemeConfig, openScalingModal, openUpdateApp } from "@/utils/modal";
+  import { isDev, isElectron } from "@/utils/env";
+  import { useMobile } from "@/composables/useMobile";
 
-const router = useRouter();
-const settingStore = useSettingStore();
-const statusStore = useStatusStore();
-const { isDesktop, isSmallScreen } = useMobile();
+  const router = useRouter();
+  const settingStore = useSettingStore();
+  const statusStore = useStatusStore();
+  const { isDesktop, isSmallScreen } = useMobile();
 
-// 更新按钮提示
-const updateBtnTitle = computed(() => {
-  if (statusStore.updateDownloaded) return "更新已就绪，点击查看";
-  if (statusStore.updateDownloading) {
-    return `下载中 ${Math.round(statusStore.updateDownloadProgress)}%`;
-  }
-  return `发现新版本 ${statusStore.updateInfo?.version || ""}`;
-});
+  // 更新按钮提示
+  const updateBtnTitle = computed(() => {
+    if (statusStore.updateDownloaded) return "更新已就绪，点击查看";
+    if (statusStore.updateDownloading) {
+      return `下载中 ${Math.round(statusStore.updateDownloadProgress)}%`;
+    }
+    return `发现新版本 ${statusStore.updateInfo?.version || ""}`;
+  });
 
-// 点击更新按钮
-const handleUpdateClick = () => {
-  if (statusStore.updateInfo) {
-    openUpdateApp(statusStore.updateInfo);
-  }
-};
+  // 点击更新按钮
+  const handleUpdateClick = () => {
+    if (statusStore.updateInfo) {
+      openUpdateApp(statusStore.updateInfo);
+    }
+  };
 
-const showCloseModal = ref(false);
-// 是否记住
-const rememberNotAsk = ref(false);
-// 是否启用无边框窗口
-const useBorderless = ref(true);
-// 当前窗口状态
-const isMax = ref(false);
-// 是否显示侧边栏
-const showAside = ref(false);
+  const showCloseModal = ref(false);
+  // 是否记住
+  const rememberNotAsk = ref(false);
+  // 是否启用无边框窗口
+  const useBorderless = ref(true);
+  // 当前窗口状态
+  const isMax = ref(false);
+  // 是否显示侧边栏
+  const showAside = ref(false);
 
-// 最小化
-const min = () => window.electron.ipcRenderer.send("win-min");
+  // 最小化
+  const min = () => window.electron.ipcRenderer.send("win-min");
 
-// 最大化或还原
-const maxOrRes = () => {
-  if (window.electron.ipcRenderer.sendSync("win-state")) {
-    window.electron.ipcRenderer.send("win-restore");
-  } else {
-    window.electron.ipcRenderer.send("win-max");
-  }
-};
+  // 最大化或还原
+  const maxOrRes = () => {
+    if (window.electron.ipcRenderer.sendSync("win-state")) {
+      window.electron.ipcRenderer.send("win-restore");
+    } else {
+      window.electron.ipcRenderer.send("win-max");
+    }
+  };
 
-// 隐藏或关闭
-const hideOrClose = (action: "hide" | "exit") => {
-  if (rememberNotAsk.value) {
-    settingStore.showCloseAppTip = false;
-    settingStore.closeAppMethod = action;
-  }
-  showCloseModal.value = false;
-  window.electron.ipcRenderer.send(action === "hide" ? "win-hide" : "quit-app");
-};
+  // 隐藏或关闭
+  const hideOrClose = (action: "hide" | "exit") => {
+    if (rememberNotAsk.value) {
+      settingStore.showCloseAppTip = false;
+      settingStore.closeAppMethod = action;
+    }
+    showCloseModal.value = false;
+    window.electron.ipcRenderer.send(action === "hide" ? "win-hide" : "quit-app");
+  };
 
-// 尝试关闭软件
-const tryClose = () => {
-  if (settingStore.showCloseAppTip) {
-    showCloseModal.value = true;
-  } else {
-    hideOrClose(settingStore.closeAppMethod);
-  }
-};
+  // 尝试关闭软件
+  const tryClose = () => {
+    if (settingStore.showCloseAppTip) {
+      showCloseModal.value = true;
+    } else {
+      hideOrClose(settingStore.closeAppMethod);
+    }
+  };
 
-// 设置菜单
-const setOptions = computed<DropdownOption[]>(() => [
-  {
-    label:
-      settingStore.themeMode === "auto"
-        ? "浅色模式"
-        : settingStore.themeMode === "light"
-          ? "深色模式"
-          : "跟随系统",
-    key: "themeMode",
-    disabled: !!statusStore.backgroundImageUrl,
-    icon: renderIcon(
-      settingStore.themeMode === "auto"
-        ? "LightTheme"
-        : settingStore.themeMode === "light"
-          ? "DarkTheme"
-          : "AutoTheme",
-    ),
-  },
-  {
-    label: "主题配置",
-    key: "themeConfig",
-    icon: renderIcon("Palette"),
-  },
-  {
-    key: "zoom",
-    label: "界面缩放",
-    icon: renderIcon("ZoomIn"),
-    show: isElectron,
-  },
-  {
-    key: "divider-1",
-    type: "divider",
-  },
-  {
-    // 重启
-    key: "restart",
-    label: "软件热重载",
-    show: isElectron,
-    props: { onClick: () => window.electron.ipcRenderer.send("win-reload") },
-    icon: renderIcon("Restart"),
-  },
-  {
-    key: "dev-tools",
-    label: "开启控制台",
-    show: isDev,
-    icon: renderIcon("Code"),
-  },
-  {
-    key: "setting",
-    label: "全局设置",
-    icon: renderIcon("Settings"),
-  },
-]);
+  // 设置菜单
+  const setOptions = computed<DropdownOption[]>(() => [
+    {
+      label:
+        settingStore.themeMode === "auto"
+          ? "浅色模式"
+          : settingStore.themeMode === "light"
+            ? "深色模式"
+            : "跟随系统",
+      key: "themeMode",
+      disabled: !!statusStore.backgroundImageUrl,
+      icon: renderIcon(
+        settingStore.themeMode === "auto"
+          ? "LightTheme"
+          : settingStore.themeMode === "light"
+            ? "DarkTheme"
+            : "AutoTheme",
+      ),
+    },
+    {
+      label: "主题配置",
+      key: "themeConfig",
+      icon: renderIcon("Palette"),
+    },
+    {
+      key: "zoom",
+      label: "界面缩放",
+      icon: renderIcon("ZoomIn"),
+      show: isElectron,
+    },
+    {
+      key: "divider-1",
+      type: "divider",
+    },
+    {
+      // 重启
+      key: "restart",
+      label: "软件热重载",
+      show: isElectron,
+      props: { onClick: () => window.electron.ipcRenderer.send("win-reload") },
+      icon: renderIcon("Restart"),
+    },
+    {
+      key: "dev-tools",
+      label: "开启控制台",
+      show: isDev,
+      icon: renderIcon("Code"),
+    },
+    {
+      key: "setting",
+      label: "全局设置",
+      icon: renderIcon("Settings"),
+    },
+  ]);
 
-// 菜单选择
-const setSelect = (key: string) => {
-  switch (key) {
-    case "themeMode":
-      settingStore.setThemeMode();
-      break;
-    case "themeConfig":
-      openThemeConfig();
-      break;
-    case "zoom":
-      openScalingModal();
-      break;
-    case "setting":
-      openSetting();
-      break;
-    case "dev-tools":
-      window.electron.ipcRenderer.send("open-dev-tools");
-      break;
-  }
-};
+  // 菜单选择
+  const setSelect = (key: string) => {
+    switch (key) {
+      case "themeMode":
+        settingStore.setThemeMode();
+        break;
+      case "themeConfig":
+        openThemeConfig();
+        break;
+      case "zoom":
+        openScalingModal();
+        break;
+      case "setting":
+        openSetting();
+        break;
+      case "dev-tools":
+        window.electron.ipcRenderer.send("open-dev-tools");
+        break;
+    }
+  };
 
-onMounted(async () => {
-  // 获取窗口状态并监听主进程的状态变更
-  if (isElectron) {
-    // 获取无边框窗口配置
-    const windowConfig = await window.api.store.get("window");
-    useBorderless.value = windowConfig?.useBorderless ?? true;
-    // 获取窗口状态
-    isMax.value = window.electron.ipcRenderer.sendSync("win-state");
-    window.electron.ipcRenderer.on("win-state-change", (_event, value: boolean) => {
-      isMax.value = value;
-    });
-  }
-});
+  onMounted(async () => {
+    // 获取窗口状态并监听主进程的状态变更
+    if (isElectron) {
+      // 获取无边框窗口配置
+      const windowConfig = await window.api.store.get("window");
+      useBorderless.value = windowConfig?.useBorderless ?? true;
+      // 获取窗口状态
+      isMax.value = window.electron.ipcRenderer.sendSync("win-state");
+      window.electron.ipcRenderer.on("win-state-change", (_event, value: boolean) => {
+        isMax.value = value;
+      });
+    }
+  });
 </script>
 
 <style lang="scss" scoped>
-.nav {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 70px;
-  padding: 0 1rem;
-  background-color: transparent;
-  -webkit-app-region: drag;
-  .n-button {
-    width: 40px;
-    height: 40px;
-    -webkit-app-region: no-drag;
-  }
-  .nav-main {
-    position: relative;
-    flex: 1;
+  .nav {
+    display: flex;
     align-items: center;
-    height: 100%;
-    margin-left: 12px;
-    .nav-drag {
-      flex: 1;
-      width: 100%;
-      height: 100%;
-    }
-  }
-  .client-control {
-    .divider {
-      margin: 0 0 0 12px;
-    }
-    .min-button-wrapper,
-    .max-button-wrapper,
-    .close-button-wrapper {
-      position: relative;
-      cursor: pointer;
-    }
-    .min-expanded-area,
-    .max-expanded-area,
-    .close-expanded-area {
-      position: fixed;
-      top: 0;
-      width: 50px;
-      height: 70px;
-      background-color: transparent;
-      cursor: pointer;
+    justify-content: space-between;
+    height: 70px;
+    padding: 0 1rem;
+    background-color: transparent;
+    -webkit-app-region: drag;
+    .n-button {
+      width: 40px;
+      height: 40px;
       -webkit-app-region: no-drag;
-      z-index: 1000;
     }
-    .close-expanded-area {
-      right: 0;
+    .nav-main {
+      position: relative;
+      flex: 1;
+      align-items: center;
+      height: 100%;
+      margin-left: 12px;
+      .nav-drag {
+        flex: 1;
+        width: 100%;
+        height: 100%;
+      }
     }
-    .max-expanded-area {
-      right: 50px;
-    }
-    .min-expanded-area {
-      right: 100px;
+    .client-control {
+      .divider {
+        margin: 0 0 0 12px;
+      }
+      .min-button-wrapper,
+      .max-button-wrapper,
+      .close-button-wrapper {
+        position: relative;
+        cursor: pointer;
+      }
+      .min-expanded-area,
+      .max-expanded-area,
+      .close-expanded-area {
+        position: fixed;
+        top: 0;
+        width: 50px;
+        height: 70px;
+        background-color: transparent;
+        cursor: pointer;
+        -webkit-app-region: no-drag;
+        z-index: 1000;
+      }
+      .close-expanded-area {
+        right: 0;
+      }
+      .max-expanded-area {
+        right: 50px;
+      }
+      .min-expanded-area {
+        right: 100px;
+      }
     }
   }
-}
-.tip {
-  font-size: 16px;
-}
-.aside-logo {
-  .n-text {
-    width: 90px;
-    font-size: 22px;
-    font-family: "logo";
-    margin-top: 2px;
-    line-height: 40px;
+  .tip {
+    font-size: 16px;
   }
-}
-.checkbox {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  width: max-content;
-  margin-top: 12px;
-  :deep(.n-checkbox__label) {
-    line-height: 0;
+  .aside-logo {
+    .n-text {
+      width: 90px;
+      font-size: 22px;
+      font-family: "logo";
+      margin-top: 2px;
+      line-height: 40px;
+    }
   }
-}
+  .checkbox {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: max-content;
+    margin-top: 12px;
+    :deep(.n-checkbox__label) {
+      line-height: 0;
+    }
+  }
 </style>

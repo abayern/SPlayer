@@ -64,37 +64,37 @@
 </template>
 
 <script setup lang="ts">
-import { useStatusStore } from "@/stores";
-import { convertSecondsToTime } from "@/utils/time";
-import { usePlayerController } from "@/core/player/PlayerController";
+  import { useStatusStore } from "@/stores";
+  import { convertSecondsToTime } from "@/utils/time";
+  import { usePlayerController } from "@/core/player/PlayerController";
 
-const player = usePlayerController();
-const statusStore = useStatusStore();
+  const player = usePlayerController();
+  const statusStore = useStatusStore();
 
-// 自定义时长
-const customTime = ref(1);
+  // 自定义时长
+  const customTime = ref(1);
 
-// 是否开启
-const handleUpdate = (value: boolean) => {
-  if (value) {
-    player.startAutoCloseTimer(statusStore.autoClose.time, statusStore.autoClose.remainTime);
-  } else {
-    statusStore.autoClose.enable = false;
-    statusStore.autoClose.remainTime = statusStore.autoClose.time * 60;
-    statusStore.autoClose.endTime = 0;
-  }
-};
+  // 是否开启
+  const handleUpdate = (value: boolean) => {
+    if (value) {
+      player.startAutoCloseTimer(statusStore.autoClose.time, statusStore.autoClose.remainTime);
+    } else {
+      statusStore.autoClose.enable = false;
+      statusStore.autoClose.remainTime = statusStore.autoClose.time * 60;
+      statusStore.autoClose.endTime = 0;
+    }
+  };
 </script>
 
 <style scoped lang="scss">
-.auto-close {
-  width: 100%;
-  .open {
+  .auto-close {
     width: 100%;
-    border-radius: 8px;
-    .n-text {
-      font-size: 18px;
+    .open {
+      width: 100%;
+      border-radius: 8px;
+      .n-text {
+        font-size: 18px;
+      }
     }
   }
-}
 </style>

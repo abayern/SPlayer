@@ -36,62 +36,62 @@
 </template>
 
 <script setup lang="ts">
-import { useSettingStore } from "@/stores";
-import { getFontSize } from "@/utils/style";
+  import { useSettingStore } from "@/stores";
+  import { getFontSize } from "@/utils/style";
 
-const settingStore = useSettingStore();
+  const settingStore = useSettingStore();
 
-const fontSizeComputed = (key: string) =>
-  computed({
-    get: () =>
-      settingStore.useAMLyrics
-        ? // AMLL 会为翻译和音译设置 `font-size: max(.5em, 10px);`
-          Math.max(0.5 * settingStore.lyricFontSize, 10)
-        : settingStore[key],
-    set: (value) => (settingStore[key] = value),
-  });
+  const fontSizeComputed = (key: string) =>
+    computed({
+      get: () =>
+        settingStore.useAMLyrics
+          ? // AMLL 会为翻译和音译设置 `font-size: max(.5em, 10px);`
+            Math.max(0.5 * settingStore.lyricFontSize, 10)
+          : settingStore[key],
+      set: (value) => (settingStore[key] = value),
+    });
 
-const tranFontSize = fontSizeComputed("lyricTranFontSize");
-const romaFontSize = fontSizeComputed("lyricRomaFontSize");
+  const tranFontSize = fontSizeComputed("lyricTranFontSize");
+  const romaFontSize = fontSizeComputed("lyricRomaFontSize");
 </script>
 
 <style scoped lang="scss">
-#lyrics-show {
-  .lrc-item {
-    display: flex;
-    flex-direction: column;
-    opacity: 0.3;
-    transform-origin: var(--transform-origin);
-    transform: scale(0.86);
-    transition: all 0.3s;
-    &.on {
-      opacity: 1;
-      transform: scale(1);
-    }
-    .n-text {
-      font-family: var(--font-family);
+  #lyrics-show {
+    .lrc-item {
+      display: flex;
+      flex-direction: column;
+      opacity: 0.3;
+      transform-origin: var(--transform-origin);
+      transform: scale(0.86);
+      transition: all 0.3s;
+      &.on {
+        opacity: 1;
+        transform: scale(1);
+      }
+      .n-text {
+        font-family: var(--font-family);
 
-      &:nth-of-type(1) {
-        font-weight: var(--font-weight);
-        font-size: var(--font-size);
-      }
-      &:nth-of-type(2) {
-        opacity: 0.6;
-        font-size: var(--font-tran-size);
-      }
-      &:nth-of-type(3) {
-        opacity: 0.6;
-        font-size: var(--font-roma-size);
+        &:nth-of-type(1) {
+          font-weight: var(--font-weight);
+          font-size: var(--font-size);
+        }
+        &:nth-of-type(2) {
+          opacity: 0.6;
+          font-size: var(--font-tran-size);
+        }
+        &:nth-of-type(3) {
+          opacity: 0.6;
+          font-size: var(--font-roma-size);
+        }
       }
     }
+    .warning {
+      border-radius: 8px;
+      font-size: 16px;
+      background-color: rgba(255, 255, 255, 0.1);
+      margin-bottom: 4px;
+      width: 100%;
+      box-sizing: border-box;
+    }
   }
-  .warning {
-    border-radius: 8px;
-    font-size: 16px;
-    background-color: rgba(255, 255, 255, 0.1);
-    margin-bottom: 4px;
-    width: 100%;
-    box-sizing: border-box;
-  }
-}
 </style>

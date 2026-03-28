@@ -124,353 +124,353 @@
 </template>
 
 <script setup lang="ts">
-import type { CoverType, SongType } from "@/types/main";
-import { albumDetail } from "@/api/album";
-import { formatNumber } from "@/utils/helper";
-import { useMusicStore, useStatusStore, useLocalStore, useSettingStore } from "@/stores";
-import { debounce } from "lodash-es";
-import { formatSongsList, removeBrackets } from "@/utils/format";
-import { songDetail } from "@/api/song";
-import { playlistAllSongs } from "@/api/playlist";
-import { radioAllProgram } from "@/api/radio";
-import { usePlayerController } from "@/core/player/PlayerController";
-import { formatTimestamp } from "@/utils/time";
-import CoverMenu from "@/components/Menu/CoverMenu.vue";
+  import type { CoverType, SongType } from "@/types/main";
+  import { albumDetail } from "@/api/album";
+  import { formatNumber } from "@/utils/helper";
+  import { useMusicStore, useStatusStore, useLocalStore, useSettingStore } from "@/stores";
+  import { debounce } from "lodash-es";
+  import { formatSongsList, removeBrackets } from "@/utils/format";
+  import { songDetail } from "@/api/song";
+  import { playlistAllSongs } from "@/api/playlist";
+  import { radioAllProgram } from "@/api/radio";
+  import { usePlayerController } from "@/core/player/PlayerController";
+  import { formatTimestamp } from "@/utils/time";
+  import CoverMenu from "@/components/Menu/CoverMenu.vue";
 
-const props = defineProps<{
-  data: CoverType[];
-  type: "playlist" | "album" | "video" | "radio";
-  loadMore?: boolean;
-  loading?: boolean;
-  loadingNum?: number;
-  loadingText?: string;
-  emptyDescription?: string;
-  /** 是否为流媒体数据 */
-  isStreaming?: boolean;
-  hiddenCover?: boolean;
-}>();
+  const props = defineProps<{
+    data: CoverType[];
+    type: "playlist" | "album" | "video" | "radio";
+    loadMore?: boolean;
+    loading?: boolean;
+    loadingNum?: number;
+    loadingText?: string;
+    emptyDescription?: string;
+    /** 是否为流媒体数据 */
+    isStreaming?: boolean;
+    hiddenCover?: boolean;
+  }>();
 
-const emit = defineEmits<{
-  // 加载更多
-  loadMore: [];
-}>();
+  const emit = defineEmits<{
+    // 加载更多
+    loadMore: [];
+  }>();
 
-const router = useRouter();
-const musicStore = useMusicStore();
-const statusStore = useStatusStore();
-const localStore = useLocalStore();
-const settingStore = useSettingStore();
-const player = usePlayerController();
+  const router = useRouter();
+  const musicStore = useMusicStore();
+  const statusStore = useStatusStore();
+  const localStore = useLocalStore();
+  const settingStore = useSettingStore();
+  const player = usePlayerController();
 
-// 右键菜单
-const coverMenuRef = ref<InstanceType<typeof CoverMenu> | null>(null);
+  // 右键菜单
+  const coverMenuRef = ref<InstanceType<typeof CoverMenu> | null>(null);
 
-// 是否处于当前播放列表
-const isPlaying = (id: number | string) =>
-  musicStore.playPlaylistId === id && statusStore.playStatus;
+  // 是否处于当前播放列表
+  const isPlaying = (id: number | string) =>
+    musicStore.playPlaylistId === id && statusStore.playStatus;
 
-// 查看详情
-const goDetail = (item: CoverType) => {
-  // 流媒体歌单跳转到专门的路由
-  if (props.isStreaming && props.type === "playlist") {
+  // 查看详情
+  const goDetail = (item: CoverType) => {
+    // 流媒体歌单跳转到专门的路由
+    if (props.isStreaming && props.type === "playlist") {
+      router.push({
+        name: "streaming-playlist",
+        query: { id: item.id },
+      });
+      return;
+    }
     router.push({
-      name: "streaming-playlist",
+      name: props.type,
       query: { id: item.id },
     });
-    return;
-  }
-  router.push({
-    name: props.type,
-    query: { id: item.id },
-  });
-};
+  };
 
-// 播放歌单
-const playList = debounce(
-  async (item: CoverType) => {
-    try {
-      // 视频直接跳转
-      if (props.type === "video") {
-        return router.push({ name: "video", query: { id: item.id } });
-      }
-      // 流媒体歌单直接跳转到详情页
-      if (props.isStreaming && props.type === "playlist") {
-        return router.push({ name: "streaming-playlist", query: { id: item.id } });
-      }
-      // 是否为当前列表
-      if (musicStore.playPlaylistId === item.id) return player.playOrPause();
-      // 开始加载
-      item.loading = true;
-      // 获取播放列表
-      const list = await getListData(item.id);
-      player.updatePlayList(list, undefined, item.id as number);
-    } catch (error) {
-      console.log("Error to play: ", error);
-    } finally {
-      item.loading = false;
-    }
-  },
-  300,
-  { leading: true, trailing: false },
-);
-
-// 获取列表数据
-const getListData = async (id: number | string): Promise<SongType[]> => {
-  // 判断是否为本地歌单
-  const isLocalPlaylist = localStore.isLocalPlaylist(id);
-
-  switch (props.type) {
-    case "album": {
-      const result = await albumDetail(Number(id));
-      const ids: number[] = result.songs.map((song: any) => song.id as number);
-      const songRes = await songDetail(ids);
-      return formatSongsList(songRes.songs);
-    }
-    case "playlist": {
-      // 本地歌单
-      if (isLocalPlaylist) {
-        const result = localStore.getLocalPlaylistDetail(Number(id));
-        if (!result) {
-          window.$message.error("本地歌单不存在");
-          return [];
+  // 播放歌单
+  const playList = debounce(
+    async (item: CoverType) => {
+      try {
+        // 视频直接跳转
+        if (props.type === "video") {
+          return router.push({ name: "video", query: { id: item.id } });
         }
-        return result.songs;
+        // 流媒体歌单直接跳转到详情页
+        if (props.isStreaming && props.type === "playlist") {
+          return router.push({ name: "streaming-playlist", query: { id: item.id } });
+        }
+        // 是否为当前列表
+        if (musicStore.playPlaylistId === item.id) return player.playOrPause();
+        // 开始加载
+        item.loading = true;
+        // 获取播放列表
+        const list = await getListData(item.id);
+        player.updatePlayList(list, undefined, item.id as number);
+      } catch (error) {
+        console.log("Error to play: ", error);
+      } finally {
+        item.loading = false;
       }
-      // 在线歌单：仅请求 100 首
-      const result = await playlistAllSongs(Number(id), 100);
-      return formatSongsList(result.songs);
+    },
+    300,
+    { leading: true, trailing: false },
+  );
+
+  // 获取列表数据
+  const getListData = async (id: number | string): Promise<SongType[]> => {
+    // 判断是否为本地歌单
+    const isLocalPlaylist = localStore.isLocalPlaylist(id);
+
+    switch (props.type) {
+      case "album": {
+        const result = await albumDetail(Number(id));
+        const ids: number[] = result.songs.map((song: any) => song.id as number);
+        const songRes = await songDetail(ids);
+        return formatSongsList(songRes.songs);
+      }
+      case "playlist": {
+        // 本地歌单
+        if (isLocalPlaylist) {
+          const result = localStore.getLocalPlaylistDetail(Number(id));
+          if (!result) {
+            window.$message.error("本地歌单不存在");
+            return [];
+          }
+          return result.songs;
+        }
+        // 在线歌单：仅请求 100 首
+        const result = await playlistAllSongs(Number(id), 100);
+        return formatSongsList(result.songs);
+      }
+      case "radio": {
+        const result = await radioAllProgram(Number(id), 100);
+        return formatSongsList(result.programs);
+      }
+      default:
+        return [];
     }
-    case "radio": {
-      const result = await radioAllProgram(Number(id), 100);
-      return formatSongsList(result.programs);
-    }
-    default:
-      return [];
-  }
-};
+  };
 </script>
 
 <style lang="scss" scoped>
-.cover-list {
-  width: 100%;
-  padding: 20px 4px;
-  .cover-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 20px;
-    @media (max-width: 600px) {
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-    }
-  }
-  .cover-item {
-    position: relative;
-    height: auto;
-    border-radius: 16px;
-    z-index: 0;
-    transition:
-      background-color 0.3s,
-      transform 0.3s;
-    cursor: pointer;
-    .cover {
-      position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      aspect-ratio: 1 / 1;
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0px 0px 4px 2px rgba(0, 0, 0, 0.1);
-      transition:
-        border-radius 0.3s,
-        box-shadow 0.3s;
-      :deep(img) {
-        width: 100%;
-        height: 100%;
-        // opacity: 0;
-        transition: opacity 0.35s ease-in-out;
-      }
-      .cover-img {
-        transition:
-          filter 0.3s,
-          transform 0.3s;
-      }
-      .cover-mask {
-        position: absolute;
-        top: 0;
-        left: 0;
-        height: 30%;
-        width: 100%;
-        background: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0));
-      }
-      .play-count {
-        position: absolute;
-        display: flex;
-        align-items: center;
-        top: 10px;
-        right: 12px;
-        color: #fff;
-        font-weight: bold;
-        z-index: 2;
-        .n-icon {
-          color: #fff;
-          font-size: 16px;
-          margin-right: 4px;
-        }
-      }
-      .description {
-        position: absolute;
-        left: 0;
-        bottom: 0;
-        width: 100%;
-        padding: 40px 60px 12px 12px;
-        background: linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.6));
-        transform: translateY(100%);
-        transition: transform 0.3s;
-        .n-text {
-          color: #fff;
-          line-clamp: 3;
-          -webkit-line-clamp: 3;
-        }
-      }
-      .play {
-        position: absolute;
-        right: 10px;
-        bottom: 10px;
-        transform: translateY(8px);
-        opacity: 0;
-        transition: all 0.3s;
-        background-color: #ffffff66;
-        backdrop-filter: blur(6px);
-        --n-width: 42px;
-        --n-height: 42px;
-        .n-icon {
-          color: #fff;
-        }
-        :deep(.n-base-loading) {
-          color: #fff;
-        }
-        &:active {
-          background-color: #ffffff33;
-        }
-      }
-      .n-skeleton {
-        height: 100%;
-      }
-    }
-    .cover-data {
-      display: flex;
-      flex-direction: column;
-      padding: 12px;
-      .name {
-        font-size: 16px;
-        line-clamp: 2;
-        -webkit-line-clamp: 2;
-      }
-      .tip {
-        font-size: 13px;
-      }
-      .meta {
-        font-size: 13px;
-        .count {
-          &::after {
-            content: "·";
-            margin: 0 2px;
-          }
-        }
-      }
-      .artists {
-        margin-top: 2px;
-        font-size: 13px;
-        .ar {
-          display: inline-flex;
-          transition: opacity 0.3s;
-          opacity: 0.6;
-          cursor: pointer;
-          &::after {
-            content: "/";
-            margin: 0 4px;
-          }
-          &:last-child {
-            &::after {
-              display: none;
-            }
-          }
-          &:hover {
-            opacity: 0.8;
-          }
-        }
-      }
-      :deep(.n-skeleton) {
-        &:first-child {
-          margin-bottom: 12px;
-        }
-      }
-    }
-    &:hover {
-      background-color: rgba(var(--primary), 0.12);
-      .cover {
-        .cover-img {
-          transform: scale(1.1);
-          filter: brightness(0.8);
-        }
-        .description {
-          transform: translateY(0);
-        }
-        .play {
-          transform: translateY(0);
-          opacity: 1;
-        }
-      }
-    }
-    &.no-cover {
-      background-color: var(--surface-container-hex);
-      border: 2px solid rgba(var(--primary), 0.12);
-      padding: 0;
-      overflow: hidden;
-      &:hover {
-        border-color: rgba(var(--primary), 0.58);
-      }
-      .cover-data {
-        height: 100%;
-        justify-content: center;
-        .name {
-          font-size: 18px;
-          font-weight: bold;
-        }
-      }
-    }
-  }
-  .load-more {
-    margin: 20px 0;
-  }
-  &.video {
+  .cover-list {
+    width: 100%;
+    padding: 20px 4px;
     .cover-grid {
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 20px;
+      @media (max-width: 600px) {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+      }
     }
     .cover-item {
+      position: relative;
+      height: auto;
+      border-radius: 16px;
+      z-index: 0;
+      transition:
+        background-color 0.3s,
+        transform 0.3s;
+      cursor: pointer;
       .cover {
-        aspect-ratio: 16/9;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        aspect-ratio: 1 / 1;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0px 0px 4px 2px rgba(0, 0, 0, 0.1);
+        transition:
+          border-radius 0.3s,
+          box-shadow 0.3s;
+        :deep(img) {
+          width: 100%;
+          height: 100%;
+          // opacity: 0;
+          transition: opacity 0.35s ease-in-out;
+        }
+        .cover-img {
+          transition:
+            filter 0.3s,
+            transform 0.3s;
+        }
+        .cover-mask {
+          position: absolute;
+          top: 0;
+          left: 0;
+          height: 30%;
+          width: 100%;
+          background: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0));
+        }
+        .play-count {
+          position: absolute;
+          display: flex;
+          align-items: center;
+          top: 10px;
+          right: 12px;
+          color: #fff;
+          font-weight: bold;
+          z-index: 2;
+          .n-icon {
+            color: #fff;
+            font-size: 16px;
+            margin-right: 4px;
+          }
+        }
+        .description {
+          position: absolute;
+          left: 0;
+          bottom: 0;
+          width: 100%;
+          padding: 40px 60px 12px 12px;
+          background: linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.6));
+          transform: translateY(100%);
+          transition: transform 0.3s;
+          .n-text {
+            color: #fff;
+            line-clamp: 3;
+            -webkit-line-clamp: 3;
+          }
+        }
+        .play {
+          position: absolute;
+          right: 10px;
+          bottom: 10px;
+          transform: translateY(8px);
+          opacity: 0;
+          transition: all 0.3s;
+          background-color: #ffffff66;
+          backdrop-filter: blur(6px);
+          --n-width: 42px;
+          --n-height: 42px;
+          .n-icon {
+            color: #fff;
+          }
+          :deep(.n-base-loading) {
+            color: #fff;
+          }
+          &:active {
+            background-color: #ffffff33;
+          }
+        }
+        .n-skeleton {
+          height: 100%;
+        }
       }
-    }
-  }
-  &.loading {
-    .cover {
-      box-shadow: none;
-    }
-    .cover-item.no-cover {
-      height: 80px;
       .cover-data {
-        height: 100%;
         display: flex;
         flex-direction: column;
-        justify-content: center;
+        padding: 12px;
+        .name {
+          font-size: 16px;
+          line-clamp: 2;
+          -webkit-line-clamp: 2;
+        }
+        .tip {
+          font-size: 13px;
+        }
+        .meta {
+          font-size: 13px;
+          .count {
+            &::after {
+              content: "·";
+              margin: 0 2px;
+            }
+          }
+        }
+        .artists {
+          margin-top: 2px;
+          font-size: 13px;
+          .ar {
+            display: inline-flex;
+            transition: opacity 0.3s;
+            opacity: 0.6;
+            cursor: pointer;
+            &::after {
+              content: "/";
+              margin: 0 4px;
+            }
+            &:last-child {
+              &::after {
+                display: none;
+              }
+            }
+            &:hover {
+              opacity: 0.8;
+            }
+          }
+        }
+        :deep(.n-skeleton) {
+          &:first-child {
+            margin-bottom: 12px;
+          }
+        }
+      }
+      &:hover {
+        background-color: rgba(var(--primary), 0.12);
+        .cover {
+          .cover-img {
+            transform: scale(1.1);
+            filter: brightness(0.8);
+          }
+          .description {
+            transform: translateY(0);
+          }
+          .play {
+            transform: translateY(0);
+            opacity: 1;
+          }
+        }
+      }
+      &.no-cover {
+        background-color: var(--surface-container-hex);
+        border: 2px solid rgba(var(--primary), 0.12);
+        padding: 0;
+        overflow: hidden;
+        &:hover {
+          border-color: rgba(var(--primary), 0.58);
+        }
+        .cover-data {
+          height: 100%;
+          justify-content: center;
+          .name {
+            font-size: 18px;
+            font-weight: bold;
+          }
+        }
+      }
+    }
+    .load-more {
+      margin: 20px 0;
+    }
+    &.video {
+      .cover-grid {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      }
+      .cover-item {
+        .cover {
+          aspect-ratio: 16/9;
+        }
+      }
+    }
+    &.loading {
+      .cover {
+        box-shadow: none;
+      }
+      .cover-item.no-cover {
+        height: 80px;
+        .cover-data {
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+        }
       }
     }
   }
-}
-.n-empty {
-  margin-top: 60px;
-}
+  .n-empty {
+    margin-top: 60px;
+  }
 </style>

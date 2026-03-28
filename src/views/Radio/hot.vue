@@ -69,107 +69,107 @@
 </template>
 
 <script setup lang="ts">
-import type { CoverType } from "@/types/main";
-import { radioCatList, radioToplist, radioTypes } from "@/api/radio";
-import { getCacheData } from "@/utils/cache";
-import { formatCoverList } from "@/utils/format";
-import { useSettingStore } from "@/stores";
+  import type { CoverType } from "@/types/main";
+  import { radioCatList, radioToplist, radioTypes } from "@/api/radio";
+  import { getCacheData } from "@/utils/cache";
+  import { formatCoverList } from "@/utils/format";
+  import { useSettingStore } from "@/stores";
 
-interface RadioType {
-  id: number;
-  name: string;
-  radio?: CoverType[];
-}
-
-const router = useRouter();
-const settingStore = useSettingStore();
-
-// 栅格折叠
-const gridCollapsed = ref<boolean>(true);
-
-// 播客数据
-const radioTypeData = ref<RadioType[]>([]);
-const radioHotData = ref<CoverType[]>([]);
-const radioCatRecData = ref<RadioType[]>([]);
-
-// 获取播客分类
-const getRadioType = async () => {
-  try {
-    const result = await getCacheData(radioCatList, {
-      key: "radioTypeData",
-      time: 0,
-      storage: "localStorage",
-    });
-    radioTypeData.value = result.categories.map(({ name, id }) => ({ name, id }));
-  } catch (error) {
-    console.error("Error getting radio cat list:", error);
-    window.$message.error("分类获取失败，请重试");
+  interface RadioType {
+    id: number;
+    name: string;
+    radio?: CoverType[];
   }
-};
 
-// 获取推荐电台
-const getRecRadioData = async () => {
-  try {
-    const [recRes, catRecRes] = await Promise.all([radioToplist("hot"), radioTypes()]);
-    radioHotData.value = formatCoverList(recRes.toplist);
-    radioCatRecData.value = catRecRes.data?.map((v: any) => ({
-      id: v.categoryId,
-      name: v.categoryName,
-      radio: formatCoverList(v.radios),
-    }));
-  } catch (error) {
-    console.error("Error getting rec radio:", error);
-    window.$message.error("获取推荐电台出现错误");
-  }
-};
+  const router = useRouter();
+  const settingStore = useSettingStore();
 
-onMounted(() => {
-  getRadioType();
-  getRecRadioData();
-});
+  // 栅格折叠
+  const gridCollapsed = ref<boolean>(true);
+
+  // 播客数据
+  const radioTypeData = ref<RadioType[]>([]);
+  const radioHotData = ref<CoverType[]>([]);
+  const radioCatRecData = ref<RadioType[]>([]);
+
+  // 获取播客分类
+  const getRadioType = async () => {
+    try {
+      const result = await getCacheData(radioCatList, {
+        key: "radioTypeData",
+        time: 0,
+        storage: "localStorage",
+      });
+      radioTypeData.value = result.categories.map(({ name, id }) => ({ name, id }));
+    } catch (error) {
+      console.error("Error getting radio cat list:", error);
+      window.$message.error("分类获取失败，请重试");
+    }
+  };
+
+  // 获取推荐电台
+  const getRecRadioData = async () => {
+    try {
+      const [recRes, catRecRes] = await Promise.all([radioToplist("hot"), radioTypes()]);
+      radioHotData.value = formatCoverList(recRes.toplist);
+      radioCatRecData.value = catRecRes.data?.map((v: any) => ({
+        id: v.categoryId,
+        name: v.categoryName,
+        radio: formatCoverList(v.radios),
+      }));
+    } catch (error) {
+      console.error("Error getting rec radio:", error);
+      window.$message.error("获取推荐电台出现错误");
+    }
+  };
+
+  onMounted(() => {
+    getRadioType();
+    getRecRadioData();
+  });
 </script>
 
 <style lang="scss" scoped>
-.radio-hot {
-  .radio-type {
-    margin: 12px 0 30px;
-    transition: opacity 0.2s;
-    .cat {
-      height: 48px;
-      border-radius: 8px;
-      cursor: pointer;
-      :deep(.n-card__content) {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 12px;
-      }
-      .n-icon {
-        margin-right: 4px;
+  .radio-hot {
+    .radio-type {
+      margin: 12px 0 30px;
+      transition: opacity 0.2s;
+      .cat {
+        height: 48px;
+        border-radius: 8px;
+        cursor: pointer;
+        :deep(.n-card__content) {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 12px;
+        }
+        .n-icon {
+          margin-right: 4px;
+        }
       }
     }
-  }
-  .rec {
-    .title {
-      margin: 0;
-      display: flex;
-      align-items: center;
-      width: max-content;
-      cursor: pointer;
-      .n-icon {
-        opacity: 0;
-        transform: translateX(4px);
-        transition:
-          opacity 0.3s,
-          transform 0.3s;
-      }
-      &:hover {
+    .rec {
+      .title {
+        margin: 0;
+        display: flex;
+        align-items: center;
+        width: max-content;
+        cursor: pointer;
         .n-icon {
-          opacity: 1;
-          transform: translateX(0);
+          opacity: 0;
+          transform: translateX(4px);
+          transition:
+            opacity 0.3s,
+            transform 0.3s;
+        }
+        &:hover {
+          .n-icon {
+            opacity: 1;
+            transform: translateX(0);
+          }
         }
       }
     }
   }
-}
 </style>

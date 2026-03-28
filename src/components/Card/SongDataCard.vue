@@ -50,108 +50,108 @@
 </template>
 
 <script setup lang="ts">
-import type { SongType } from "@/types/main";
-import { coverLoaded } from "@/utils/helper";
-import { isObject } from "lodash-es";
-import { removeBrackets } from "@/utils/format";
-import { useSettingStore } from "@/stores";
+  import type { SongType } from "@/types/main";
+  import { coverLoaded } from "@/utils/helper";
+  import { isObject } from "lodash-es";
+  import { removeBrackets } from "@/utils/format";
+  import { useSettingStore } from "@/stores";
 
-const settingStore = useSettingStore();
+  const settingStore = useSettingStore();
 
-defineProps<{
-  data: SongType | null;
-  canJump?: boolean;
-}>();
+  defineProps<{
+    data: SongType | null;
+    canJump?: boolean;
+  }>();
 </script>
 
 <style lang="scss" scoped>
-.song-data-card {
-  width: 100%;
-  min-height: 120px;
-  border-radius: 12px;
-  :deep(.n-card__content) {
-    padding: 16px;
-    display: flex;
-    align-items: center;
-    padding: 16px;
-  }
-  .cover {
-    width: 80px;
-    height: 80px;
-    min-width: 80px;
+  .song-data-card {
+    width: 100%;
+    min-height: 120px;
     border-radius: 12px;
-    margin-right: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    :deep(img) {
-      width: 100%;
-      height: 100%;
-      opacity: 0;
-      transition: opacity 0.35s ease-in-out;
+    :deep(.n-card__content) {
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      padding: 16px;
     }
-  }
-  .data {
-    display: flex;
-    flex-direction: column;
-    align-self: stretch;
-    justify-content: space-around;
-    flex: 1;
-    :deep(.n-skeleton) {
-      height: 20px;
-      margin-bottom: 12px;
-    }
-    .name {
-      font-size: 20px;
-      font-weight: bold;
-    }
-    .artists {
-      margin-top: 2px;
-      font-size: 14px;
-      .n-icon {
-        font-size: 18px;
-        margin-right: 4px;
-        transform: translateY(3px);
+    .cover {
+      width: 80px;
+      height: 80px;
+      min-width: 80px;
+      border-radius: 12px;
+      margin-right: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      :deep(img) {
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        transition: opacity 0.35s ease-in-out;
       }
-      .ar {
-        display: inline-flex;
-        transition: opacity 0.3s;
-        opacity: 0.6;
-        cursor: pointer;
-        &::after {
-          content: "/";
-          margin: 0 4px;
+    }
+    .data {
+      display: flex;
+      flex-direction: column;
+      align-self: stretch;
+      justify-content: space-around;
+      flex: 1;
+      :deep(.n-skeleton) {
+        height: 20px;
+        margin-bottom: 12px;
+      }
+      .name {
+        font-size: 20px;
+        font-weight: bold;
+      }
+      .artists {
+        margin-top: 2px;
+        font-size: 14px;
+        .n-icon {
+          font-size: 18px;
+          margin-right: 4px;
+          transform: translateY(3px);
         }
-        &:last-child {
+        .ar {
+          display: inline-flex;
+          transition: opacity 0.3s;
+          opacity: 0.6;
+          cursor: pointer;
           &::after {
-            display: none;
+            content: "/";
+            margin: 0 4px;
+          }
+          &:last-child {
+            &::after {
+              display: none;
+            }
+          }
+          &:hover {
+            opacity: 0.8;
           }
         }
-        &:hover {
-          opacity: 0.8;
+      }
+      .album {
+        font-size: 14px;
+        .n-icon {
+          font-size: 18px;
+          margin-right: 4px;
+          transform: translateY(3px);
         }
-      }
-    }
-    .album {
-      font-size: 14px;
-      .n-icon {
-        font-size: 18px;
-        margin-right: 4px;
-        transform: translateY(3px);
-      }
-      .album-text {
-        transition: opacity 0.3s;
-        opacity: 0.6;
-        cursor: pointer;
-      }
-      &:hover {
         .album-text {
-          opacity: 1;
-          color: var(--primary-hex);
+          transition: opacity 0.3s;
+          opacity: 0.6;
+          cursor: pointer;
+        }
+        &:hover {
+          .album-text {
+            opacity: 1;
+            color: var(--primary-hex);
+          }
         }
       }
     }
   }
-}
 </style>

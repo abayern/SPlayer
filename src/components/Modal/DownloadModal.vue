@@ -70,123 +70,125 @@
 </template>
 
 <script setup lang="ts">
-import type { SongType, SongLevelType } from "@/types/main";
-import { useSettingStore } from "@/stores";
-import { songLevelData, getSongLevelsData, AI_AUDIO_LEVELS } from "@/utils/meta";
-import { formatFileSize } from "@/utils/helper";
-import { openSetting } from "@/utils/modal";
-import { isElectron } from "@/utils/env";
-import { songDetail } from "@/api/song";
-import { formatSongsList } from "@/utils/format";
-import { pick } from "lodash-es";
-import { useDownloadManager } from "@/core/resource/DownloadManager";
+  import type { SongType, SongLevelType } from "@/types/main";
+  import { useSettingStore } from "@/stores";
+  import { songLevelData, getSongLevelsData, AI_AUDIO_LEVELS } from "@/utils/meta";
+  import { formatFileSize } from "@/utils/helper";
+  import { openSetting } from "@/utils/modal";
+  import { isElectron } from "@/utils/env";
+  import { songDetail } from "@/api/song";
+  import { formatSongsList } from "@/utils/format";
+  import { pick } from "lodash-es";
+  import { useDownloadManager } from "@/core/resource/DownloadManager";
 
-const props = defineProps<{
-  songs?: SongType[];
-  songId?: number;
-  quality?: SongLevelType;
-}>();
+  const props = defineProps<{
+    songs?: SongType[];
+    songId?: number;
+    quality?: SongLevelType;
+  }>();
 
-const emit = defineEmits<{
-  close: [];
-}>();
+  const emit = defineEmits<{
+    close: [];
+  }>();
 
-const settingStore = useSettingStore();
-const downloadManager = useDownloadManager();
-const loading = ref<boolean>(false);
-const songs = ref<SongType[]>(props.songs || []);
+  const settingStore = useSettingStore();
+  const downloadManager = useDownloadManager();
+  const loading = ref<boolean>(false);
+  const songs = ref<SongType[]>(props.songs || []);
 
-const isBatch = computed(() => songs.value.length > 1);
-const isCloudSong = computed(() => songs.value.some((song) => song.pc));
+  const isBatch = computed(() => songs.value.length > 1);
+  const isCloudSong = computed(() => songs.value.some((song) => song.pc));
 
-const selectedQuality = ref<SongLevelType>(props.quality || settingStore.downloadSongLevel || "h");
-const downloadPath = computed(() => settingStore.downloadPath);
+  const selectedQuality = ref<SongLevelType>(
+    props.quality || settingStore.downloadSongLevel || "h",
+  );
+  const downloadPath = computed(() => settingStore.downloadPath);
 
-// 是否可以下载（需要配置下载目录）
-const canDownload = computed(() => {
-  if (!isElectron) return true;
-  return !!downloadPath.value;
-});
-
-// 音质选项
-const qualityOptions = computed(() => {
-  const levels = pick(songLevelData, ["l", "m", "h", "sq", "hr", "je", "sk", "db", "jm"]);
-  let allData = getSongLevelsData(levels);
-
-  if (settingStore.disableAiAudio) {
-    allData = allData.filter((item) => {
-      if (item.level === "dolby") return true;
-      return !AI_AUDIO_LEVELS.includes(item.level);
-    });
-  }
-
-  return allData.map((item) => ({
-    label: item.name,
-    value: item.value,
-    size: undefined,
-  }));
-});
-
-// 获取歌曲详情（单个下载时）
-const getSongDetail = async () => {
-  if (!props.songId) return;
-  loading.value = true;
-  try {
-    const result = await songDetail(props.songId);
-    songs.value = formatSongsList(result.songs);
-  } catch (error) {
-    console.error("获取歌曲详情失败:", error);
-    window.$message.error("获取歌曲详情失败");
-  } finally {
-    loading.value = false;
-  }
-};
-
-// 确认下载
-const handleConfirm = () => {
-  if (!canDownload.value) {
-    window.$message.warning("请先配置下载目录");
-    return;
-  }
-
-  if (songs.value.length === 0) {
-    window.$message.warning("没有可下载的歌曲");
-    return;
-  }
-
-  // 添加到下载队列
-  songs.value.forEach((song) => {
-    downloadManager.addDownload(song, selectedQuality.value);
+  // 是否可以下载（需要配置下载目录）
+  const canDownload = computed(() => {
+    if (!isElectron) return true;
+    return !!downloadPath.value;
   });
 
-  emit("close");
-  window.$message.success(
-    isBatch.value ? `已添加 ${songs.value.length} 首歌曲到下载队列` : "已添加到下载队列",
-  );
-};
+  // 音质选项
+  const qualityOptions = computed(() => {
+    const levels = pick(songLevelData, ["l", "m", "h", "sq", "hr", "je", "sk", "db", "jm"]);
+    let allData = getSongLevelsData(levels);
 
-// 取消
-const cancel = () => {
-  emit("close");
-};
+    if (settingStore.disableAiAudio) {
+      allData = allData.filter((item) => {
+        if (item.level === "dolby") return true;
+        return !AI_AUDIO_LEVELS.includes(item.level);
+      });
+    }
 
-// 初始化
-onMounted(() => {
-  if (props.songId) {
-    getSongDetail();
-  }
-});
+    return allData.map((item) => ({
+      label: item.name,
+      value: item.value,
+      size: undefined,
+    }));
+  });
+
+  // 获取歌曲详情（单个下载时）
+  const getSongDetail = async () => {
+    if (!props.songId) return;
+    loading.value = true;
+    try {
+      const result = await songDetail(props.songId);
+      songs.value = formatSongsList(result.songs);
+    } catch (error) {
+      console.error("获取歌曲详情失败:", error);
+      window.$message.error("获取歌曲详情失败");
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  // 确认下载
+  const handleConfirm = () => {
+    if (!canDownload.value) {
+      window.$message.warning("请先配置下载目录");
+      return;
+    }
+
+    if (songs.value.length === 0) {
+      window.$message.warning("没有可下载的歌曲");
+      return;
+    }
+
+    // 添加到下载队列
+    songs.value.forEach((song) => {
+      downloadManager.addDownload(song, selectedQuality.value);
+    });
+
+    emit("close");
+    window.$message.success(
+      isBatch.value ? `已添加 ${songs.value.length} 首歌曲到下载队列` : "已添加到下载队列",
+    );
+  };
+
+  // 取消
+  const cancel = () => {
+    emit("close");
+  };
+
+  // 初始化
+  onMounted(() => {
+    if (props.songId) {
+      getSongDetail();
+    }
+  });
 </script>
 
 <style lang="scss" scoped>
-.download-modal {
-  .loading {
-    display: block;
-    text-align: center;
-    padding: 40px 0;
+  .download-modal {
+    .loading {
+      display: block;
+      text-align: center;
+      padding: 40px 0;
+    }
+    .menu {
+      margin-top: 20px;
+    }
   }
-  .menu {
-    margin-top: 20px;
-  }
-}
 </style>

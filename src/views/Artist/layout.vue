@@ -152,324 +152,324 @@
 </template>
 
 <script setup lang="ts">
-import type { DropdownOption } from "naive-ui";
-import type { ArtistType } from "@/types/main";
-import { coverLoaded, renderIcon, copyData, getShareUrl } from "@/utils/helper";
-import { renderToolbar } from "@/utils/meta";
-import { openDescModal, openBatchList } from "@/utils/modal";
-import { artistDetail } from "@/api/artist";
-import { formatArtistsList, removeBrackets } from "@/utils/format";
-import { useDataStore, useSettingStore } from "@/stores";
-import { toLikeArtist } from "@/utils/auth";
-import ArtistSongs from "./songs.vue";
+  import type { DropdownOption } from "naive-ui";
+  import type { ArtistType } from "@/types/main";
+  import { coverLoaded, renderIcon, copyData, getShareUrl } from "@/utils/helper";
+  import { renderToolbar } from "@/utils/meta";
+  import { openDescModal, openBatchList } from "@/utils/modal";
+  import { artistDetail } from "@/api/artist";
+  import { formatArtistsList, removeBrackets } from "@/utils/format";
+  import { useDataStore, useSettingStore } from "@/stores";
+  import { toLikeArtist } from "@/utils/auth";
+  import ArtistSongs from "./songs.vue";
 
-const route = useRoute();
-const router = useRouter();
-const dataStore = useDataStore();
-const settingStore = useSettingStore();
+  const route = useRoute();
+  const router = useRouter();
+  const dataStore = useDataStore();
+  const settingStore = useSettingStore();
 
-// 路由元素
-const componentRef = ref<InstanceType<typeof ArtistSongs> | null>(null);
+  // 路由元素
+  const componentRef = ref<InstanceType<typeof ArtistSongs> | null>(null);
 
-// 歌手 ID
-const artistId = computed<number>(() => Number(route.query.id));
+  // 歌手 ID
+  const artistId = computed<number>(() => Number(route.query.id));
 
-// 歌手分类
-const artistType = ref<string>((route.name as string) || "artist-songs");
+  // 歌手分类
+  const artistType = ref<string>((route.name as string) || "artist-songs");
 
-// 歌手数据
-const artistDetailData = ref<ArtistType | null>(null);
+  // 歌手数据
+  const artistDetailData = ref<ArtistType | null>(null);
 
-// 列表是否滚动
-const listScrolling = ref<boolean>(false);
+  // 列表是否滚动
+  const listScrolling = ref<boolean>(false);
 
-// 更多操作
-const moreOptions = computed<DropdownOption[]>(() => [
-  {
-    label: "批量操作",
-    key: "batch",
-    show: artistType.value === "artist-songs",
-    props: {
-      onClick: () => {
-        if (componentRef.value?.songData) {
-          openBatchList(
-            componentRef.value.songData,
-            false,
-            isLikeArtist.value ? artistId.value : undefined,
-          );
-        } else {
-          window.$message.warning("暂无歌曲可操作");
-        }
+  // 更多操作
+  const moreOptions = computed<DropdownOption[]>(() => [
+    {
+      label: "批量操作",
+      key: "batch",
+      show: artistType.value === "artist-songs",
+      props: {
+        onClick: () => {
+          if (componentRef.value?.songData) {
+            openBatchList(
+              componentRef.value.songData,
+              false,
+              isLikeArtist.value ? artistId.value : undefined,
+            );
+          } else {
+            window.$message.warning("暂无歌曲可操作");
+          }
+        },
       },
+      icon: renderIcon("Batch"),
     },
-    icon: renderIcon("Batch"),
-  },
-  {
-    label: "复制分享链接",
-    key: "copy",
-    props: {
-      onClick: () => copyData(getShareUrl("artist", artistId.value), "已复制分享链接到剪贴板"),
-    },
-    icon: renderIcon("Share"),
-  },
-  {
-    label: "打开源页面",
-    key: "open",
-    props: {
-      onClick: () => {
-        window.open(`https://music.163.com/#/artist?id=${artistId.value}`);
+    {
+      label: "复制分享链接",
+      key: "copy",
+      props: {
+        onClick: () => copyData(getShareUrl("artist", artistId.value), "已复制分享链接到剪贴板"),
       },
+      icon: renderIcon("Share"),
     },
-    icon: renderIcon("Link"),
-  },
-]);
+    {
+      label: "打开源页面",
+      key: "open",
+      props: {
+        onClick: () => {
+          window.open(`https://music.163.com/#/artist?id=${artistId.value}`);
+        },
+      },
+      icon: renderIcon("Link"),
+    },
+  ]);
 
-// 是否处于收藏歌手
-const isLikeArtist = computed(() => {
-  return dataStore.userLikeData.artists.some((ar) => ar.id === artistId.value);
-});
-
-// 获取歌手详情
-const getArtistDetail = async (id: number) => {
-  try {
-    if (!id) return;
-    listScrolling.value = false;
-    artistDetailData.value = null;
-    const result = await artistDetail(id);
-    artistDetailData.value = formatArtistsList(result.data.artist)[0];
-    // 附加身份
-    artistDetailData.value.identify = result.data.identify?.imageDesc;
-  } catch (error) {
-    console.error("Erorr getting artist detail:", error);
-    window.$message.error("获取歌手详情失败");
-  }
-};
-
-// Tabs 改变
-const tabChange = (value: string) => {
-  router.push({
-    name: value,
-    query: { id: artistId.value },
+  // 是否处于收藏歌手
+  const isLikeArtist = computed(() => {
+    return dataStore.userLikeData.artists.some((ar) => ar.id === artistId.value);
   });
-};
 
-// 播放全部歌曲
-const playAllSongs = async () => {
-  await router.push({ name: "artist-songs", query: { id: artistId.value } });
-  if (componentRef.value) componentRef.value.playAllSongs();
-};
+  // 获取歌手详情
+  const getArtistDetail = async (id: number) => {
+    try {
+      if (!id) return;
+      listScrolling.value = false;
+      artistDetailData.value = null;
+      const result = await artistDetail(id);
+      artistDetailData.value = formatArtistsList(result.data.artist)[0];
+      // 附加身份
+      artistDetailData.value.identify = result.data.identify?.imageDesc;
+    } catch (error) {
+      console.error("Erorr getting artist detail:", error);
+      window.$message.error("获取歌手详情失败");
+    }
+  };
 
-// 列表滚动
-const listScroll = (e: Event) => {
-  // 滚动高度
-  const scrollTop = (e.target as HTMLElement).scrollTop;
-  listScrolling.value = scrollTop > 10;
-};
+  // Tabs 改变
+  const tabChange = (value: string) => {
+    router.push({
+      name: value,
+      query: { id: artistId.value },
+    });
+  };
 
-// 监听路由更新
-onBeforeRouteUpdate((to) => {
-  listScrolling.value = false;
-  // 检查是否仍在 artist 路由下
-  const isArtistRoute = to.matched.some((m) => m.name === "artist");
-  if (!isArtistRoute) return;
-  artistType.value = to.name as string;
-});
+  // 播放全部歌曲
+  const playAllSongs = async () => {
+    await router.push({ name: "artist-songs", query: { id: artistId.value } });
+    if (componentRef.value) componentRef.value.playAllSongs();
+  };
 
-// 监听 ID 变化
-watch(
-  () => artistId.value,
-  (val) => {
-    if (val) getArtistDetail(val);
-  },
-  { immediate: true },
-);
+  // 列表滚动
+  const listScroll = (e: Event) => {
+    // 滚动高度
+    const scrollTop = (e.target as HTMLElement).scrollTop;
+    listScrolling.value = scrollTop > 10;
+  };
+
+  // 监听路由更新
+  onBeforeRouteUpdate((to) => {
+    listScrolling.value = false;
+    // 检查是否仍在 artist 路由下
+    const isArtistRoute = to.matched.some((m) => m.name === "artist");
+    if (!isArtistRoute) return;
+    artistType.value = to.name as string;
+  });
+
+  // 监听 ID 变化
+  watch(
+    () => artistId.value,
+    (val) => {
+      if (val) getArtistDetail(val);
+    },
+    { immediate: true },
+  );
 </script>
 
 <style lang="scss" scoped>
-.artist {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  .detail {
+  .artist {
     display: flex;
-    height: 240px;
-    width: 100%;
-    padding: 12px 0 30px 0;
-    will-change: height, opacity;
-    z-index: 1;
-    transition:
-      height 0.3s,
-      opacity 0.3s;
-    .cover {
-      position: relative;
+    flex-direction: column;
+    height: 100%;
+    .detail {
       display: flex;
-      width: auto;
-      height: 100%;
-      aspect-ratio: 1 / 1;
-      margin-right: 20px;
-      border-radius: 50%;
+      height: 240px;
+      width: 100%;
+      padding: 12px 0 30px 0;
+      will-change: height, opacity;
+      z-index: 1;
       transition:
-        opacity 0.3s,
-        margin 0.3s,
-        transform 0.3s;
-      :deep(img) {
-        width: 100%;
+        height 0.3s,
+        opacity 0.3s;
+      .cover {
+        position: relative;
+        display: flex;
+        width: auto;
         height: 100%;
-        opacity: 0;
-        transition: opacity 0.35s ease-in-out;
-      }
-      .cover-img {
+        aspect-ratio: 1 / 1;
+        margin-right: 20px;
         border-radius: 50%;
-        overflow: hidden;
-        z-index: 1;
         transition:
           opacity 0.3s,
-          filter 0.3s,
+          margin 0.3s,
           transform 0.3s;
-      }
-      .cover-shadow {
-        position: absolute;
-        top: 8px;
-        height: 100%;
-        width: 100%;
-        border-radius: 50%;
-        filter: blur(12px) opacity(0.6);
-        transform: scale(0.92, 0.96);
-        z-index: 0;
-        background-size: cover;
-        aspect-ratio: 1/1;
         :deep(img) {
-          opacity: 1;
-        }
-      }
-      &:active {
-        transform: scale(0.98);
-      }
-    }
-    .data {
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      flex: 1;
-      padding-right: 60px;
-      :deep(.n-skeleton) {
-        height: 30px;
-        margin-top: 12px;
-        border-radius: 8px;
-        &:first-child {
-          width: 60%;
-          margin-top: 0;
-          height: 40px;
-        }
-      }
-      .description {
-        margin-bottom: 8px;
-        padding-left: 4px;
-        cursor: pointer;
-      }
-      .name {
-        font-size: 30px;
-        font-weight: bold;
-        height: 48px;
-        transition:
-          font-size 0.3s var(--n-bezier),
-          color 0.3s var(--n-bezier);
-        .name-alias {
-          &::before {
-            content: "（";
-            margin-right: 6px;
-          }
-          &::after {
-            content: "）";
-            margin-left: 6px;
-          }
-        }
-      }
-      .identify {
-        font-size: 16px;
-        margin-bottom: 8px;
-        padding-left: 4px;
-      }
-      .collapse {
-        position: absolute;
-        top: 48px;
-        margin: 8px 0;
-      }
-      .meta {
-        margin-bottom: 8px;
-        .item {
-          display: flex;
-          align-items: center;
-          cursor: pointer;
-          .n-icon {
-            font-size: 20px;
-            margin-right: 4px;
-          }
-        }
-      }
-      .menu {
-        position: absolute;
-        left: 0;
-        bottom: 0;
-        width: 100%;
-        .n-button {
-          height: 40px;
-          transition: all 0.3s var(--n-bezier);
-        }
-        .more {
-          width: 40px;
-        }
-      }
-    }
-  }
-  .tabs {
-    height: 40px;
-    z-index: 1;
-  }
-  .router-view {
-    flex: 1;
-    overflow: hidden;
-    &.artist-songs {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      padding-top: 280px;
-      transition:
-        padding 0.3s,
-        transform 0.3s,
-        opacity 0.3s;
-    }
-  }
-  &.small {
-    .detail {
-      height: 120px;
-      .cover {
-        margin-right: 12px;
-        .cover-mask,
-        .play-count {
+          width: 100%;
+          height: 100%;
           opacity: 0;
+          transition: opacity 0.35s ease-in-out;
+        }
+        .cover-img {
+          border-radius: 50%;
+          overflow: hidden;
+          z-index: 1;
+          transition:
+            opacity 0.3s,
+            filter 0.3s,
+            transform 0.3s;
+        }
+        .cover-shadow {
+          position: absolute;
+          top: 8px;
+          height: 100%;
+          width: 100%;
+          border-radius: 50%;
+          filter: blur(12px) opacity(0.6);
+          transform: scale(0.92, 0.96);
+          z-index: 0;
+          background-size: cover;
+          aspect-ratio: 1/1;
+          :deep(img) {
+            opacity: 1;
+          }
+        }
+        &:active {
+          transform: scale(0.98);
         }
       }
       .data {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        padding-right: 60px;
+        :deep(.n-skeleton) {
+          height: 30px;
+          margin-top: 12px;
+          border-radius: 8px;
+          &:first-child {
+            width: 60%;
+            margin-top: 0;
+            height: 40px;
+          }
+        }
+        .description {
+          margin-bottom: 8px;
+          padding-left: 4px;
+          cursor: pointer;
+        }
         .name {
-          font-size: 22px;
+          font-size: 30px;
+          font-weight: bold;
+          height: 48px;
+          transition:
+            font-size 0.3s var(--n-bezier),
+            color 0.3s var(--n-bezier);
+          .name-alias {
+            &::before {
+              content: "（";
+              margin-right: 6px;
+            }
+            &::after {
+              content: "）";
+              margin-left: 6px;
+            }
+          }
+        }
+        .identify {
+          font-size: 16px;
+          margin-bottom: 8px;
+          padding-left: 4px;
+        }
+        .collapse {
+          position: absolute;
+          top: 48px;
+          margin: 8px 0;
+        }
+        .meta {
+          margin-bottom: 8px;
+          .item {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            .n-icon {
+              font-size: 20px;
+              margin-right: 4px;
+            }
+          }
         }
         .menu {
-          .n-button,
-          .search {
-            height: 32px;
-            --n-font-size: 13px;
-            --n-padding: 0 14px;
-            --n-icon-size: 16px;
+          position: absolute;
+          left: 0;
+          bottom: 0;
+          width: 100%;
+          .n-button {
+            height: 40px;
+            transition: all 0.3s var(--n-bezier);
+          }
+          .more {
+            width: 40px;
           }
         }
       }
     }
+    .tabs {
+      height: 40px;
+      z-index: 1;
+    }
     .router-view {
+      flex: 1;
+      overflow: hidden;
       &.artist-songs {
-        padding-top: 160px;
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        padding-top: 280px;
+        transition:
+          padding 0.3s,
+          transform 0.3s,
+          opacity 0.3s;
+      }
+    }
+    &.small {
+      .detail {
+        height: 120px;
+        .cover {
+          margin-right: 12px;
+          .cover-mask,
+          .play-count {
+            opacity: 0;
+          }
+        }
+        .data {
+          .name {
+            font-size: 22px;
+          }
+          .menu {
+            .n-button,
+            .search {
+              height: 32px;
+              --n-font-size: 13px;
+              --n-padding: 0 14px;
+              --n-icon-size: 16px;
+            }
+          }
+        }
+      }
+      .router-view {
+        &.artist-songs {
+          padding-top: 160px;
+        }
       }
     }
   }
-}
 </style>

@@ -41,20 +41,20 @@
 </template>
 
 <script setup lang="ts">
-import { useSettingStore } from "@/stores";
-import { changeLocalLyricPath } from "@/utils/helper";
-import { SettingItem } from "@/types/settings";
+  import { useSettingStore } from "@/stores";
+  import { changeLocalLyricPath } from "@/utils/helper";
+  import { SettingItem } from "@/types/settings";
 
-defineProps<{
-  item?: SettingItem;
-}>();
+  defineProps<{
+    item?: SettingItem;
+  }>();
 
-const settingStore = useSettingStore();
+  const settingStore = useSettingStore();
 </script>
 
 <style scoped lang="scss">
-.sub-item {
-  margin-top: 12px;
-  background-color: rgba(var(--primary), 0.05);
-}
+  .sub-item {
+    margin-top: 12px;
+    background-color: rgba(var(--primary), 0.05);
+  }
 </style>

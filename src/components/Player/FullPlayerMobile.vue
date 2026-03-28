@@ -170,394 +170,394 @@
 </template>
 
 <script setup lang="ts">
-import { useSwipe } from "@vueuse/core";
-import { useMusicStore, useStatusStore, useDataStore, useSettingStore } from "@/stores";
-import { usePlayerController } from "@/core/player/PlayerController";
-import { useTimeFormat } from "@/composables/useTimeFormat";
-import { toLikeSong } from "@/utils/auth";
-import { openPlaylistAdd } from "@/utils/modal";
-import { removeBrackets } from "@/utils/format";
+  import { useSwipe } from "@vueuse/core";
+  import { useMusicStore, useStatusStore, useDataStore, useSettingStore } from "@/stores";
+  import { usePlayerController } from "@/core/player/PlayerController";
+  import { useTimeFormat } from "@/composables/useTimeFormat";
+  import { toLikeSong } from "@/utils/auth";
+  import { openPlaylistAdd } from "@/utils/modal";
+  import { removeBrackets } from "@/utils/format";
 
-const musicStore = useMusicStore();
-const statusStore = useStatusStore();
-const settingStore = useSettingStore();
-const dataStore = useDataStore();
-const player = usePlayerController();
-const { timeDisplay, toggleTimeFormat } = useTimeFormat();
+  const musicStore = useMusicStore();
+  const statusStore = useStatusStore();
+  const settingStore = useSettingStore();
+  const dataStore = useDataStore();
+  const player = usePlayerController();
+  const { timeDisplay, toggleTimeFormat } = useTimeFormat();
 
-const mobileStart = ref<HTMLElement | null>(null);
-const pageIndex = ref(0);
+  const mobileStart = ref<HTMLElement | null>(null);
+  const pageIndex = ref(0);
 
-const hasLyric = computed(() => {
-  return musicStore.isHasLrc && musicStore.playSong.type !== "radio";
-});
+  const hasLyric = computed(() => {
+    return musicStore.isHasLrc && musicStore.playSong.type !== "radio";
+  });
 
-const artistName = computed(() => {
-  const artists = musicStore.playSong.artists;
-  if (Array.isArray(artists)) {
-    return artists.map((ar) => ar.name).join(" / ");
-  }
-  return (artists as string) || "未知艺术家";
-});
+  const artistName = computed(() => {
+    const artists = musicStore.playSong.artists;
+    if (Array.isArray(artists)) {
+      return artists.map((ar) => ar.name).join(" / ");
+    }
+    return (artists as string) || "未知艺术家";
+  });
 
-// 没有歌词强制回到第一页
-watch(hasLyric, (val) => {
-  if (!val) pageIndex.value = 0;
-});
+  // 没有歌词强制回到第一页
+  watch(hasLyric, (val) => {
+    if (!val) pageIndex.value = 0;
+  });
 
-// 滑动偏移量
-const swipeOffset = ref(0);
+  // 滑动偏移量
+  const swipeOffset = ref(0);
 
-const { direction, isSwiping, lengthX } = useSwipe(mobileStart, {
-  threshold: 10,
-  onSwipe: () => {
-    if (!hasLyric.value) return;
-    // 为正表示向左滑，为负表示向右滑
-    swipeOffset.value = lengthX.value;
-  },
-  onSwipeEnd: () => {
-    if (!hasLyric.value) {
+  const { direction, isSwiping, lengthX } = useSwipe(mobileStart, {
+    threshold: 10,
+    onSwipe: () => {
+      if (!hasLyric.value) return;
+      // 为正表示向左滑，为负表示向右滑
+      swipeOffset.value = lengthX.value;
+    },
+    onSwipeEnd: () => {
+      if (!hasLyric.value) {
+        swipeOffset.value = 0;
+        return;
+      }
+      // 超过阈值则切换页面
+      if (direction.value === "left" && lengthX.value > 100) {
+        pageIndex.value = 1;
+      } else if (direction.value === "right" && lengthX.value < -100) {
+        pageIndex.value = 0;
+      }
       swipeOffset.value = 0;
-      return;
-    }
-    // 超过阈值则切换页面
-    if (direction.value === "left" && lengthX.value > 100) {
-      pageIndex.value = 1;
-    } else if (direction.value === "right" && lengthX.value < -100) {
-      pageIndex.value = 0;
-    }
-    swipeOffset.value = 0;
-  },
-});
+    },
+  });
 
-// 计算实时的变换位置
-const contentTransform = computed(() => {
-  const baseOffset = pageIndex.value * 50; // 百分比
-  if (!isSwiping.value || !hasLyric.value) {
-    return `translateX(-${baseOffset}%)`;
-  }
-  let pixelOffset = lengthX.value;
-  // 限制滑动范围
-  if (pageIndex.value === 0 && pixelOffset < 0) {
-    pixelOffset = pixelOffset * 0.3;
-  }
-  if (pageIndex.value === 1 && pixelOffset > 0) {
-    pixelOffset = pixelOffset * 0.3;
-  }
-  return `translateX(calc(-${baseOffset}% - ${pixelOffset}px))`;
-});
+  // 计算实时的变换位置
+  const contentTransform = computed(() => {
+    const baseOffset = pageIndex.value * 50; // 百分比
+    if (!isSwiping.value || !hasLyric.value) {
+      return `translateX(-${baseOffset}%)`;
+    }
+    let pixelOffset = lengthX.value;
+    // 限制滑动范围
+    if (pageIndex.value === 0 && pixelOffset < 0) {
+      pixelOffset = pixelOffset * 0.3;
+    }
+    if (pageIndex.value === 1 && pixelOffset > 0) {
+      pixelOffset = pixelOffset * 0.3;
+    }
+    return `translateX(calc(-${baseOffset}% - ${pixelOffset}px))`;
+  });
 </script>
 
 <style lang="scss" scoped>
-.full-player-mobile {
-  width: 100%;
-  height: 100%;
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  .top-bar {
-    position: absolute;
+  .full-player-mobile {
     width: 100%;
-    height: 60px;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    padding: 0 24px;
-    z-index: 10;
-    .btn {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: background-color 0.2s;
-      flex-shrink: 0;
-      &:active {
-        background-color: rgba(255, 255, 255, 0.1);
-      }
-      .n-icon {
-        color: rgb(var(--main-cover-color));
-        opacity: 0.8;
-      }
-    }
-  }
-  .mobile-content {
-    flex: 1;
-    display: flex;
-    width: 200%;
     height: 100%;
-    transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
-    &.swiping {
-      transition: none;
-    }
-    .page {
-      width: 50%;
-      height: 100%;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    .top-bar {
+      position: absolute;
+      width: 100%;
+      height: 60px;
       flex-shrink: 0;
-      position: relative;
-    }
-    .info-page {
       display: flex;
-      flex-direction: column;
       align-items: center;
-      padding: 0 24px 40px 24px;
-      overflow-y: auto;
-      .cover-section {
-        flex: 1;
-        width: 100%;
+      justify-content: flex-end;
+      padding: 0 24px;
+      z-index: 10;
+      .btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        margin-top: 60px;
-        margin-bottom: 20px;
-        :deep(.player-cover) {
-          width: min(100%, 45vh);
-          // height: min(85vw, 45vh);
-          &.record {
-            width: 40vh;
-            .cover-img {
-              width: 40vh;
-              height: 40vh;
-              min-width: 40vh;
-            }
-            .pointer {
-              width: 10vh;
-              top: -9.5vh;
-            }
-            @media (max-width: 512px) {
-              width: 36vh;
-              .cover-img {
-                width: 36vh;
-                height: 36vh;
-                min-width: 36vh;
-              }
-            }
-          }
+        cursor: pointer;
+        transition: background-color 0.2s;
+        flex-shrink: 0;
+        &:active {
+          background-color: rgba(255, 255, 255, 0.1);
+        }
+        .n-icon {
+          color: rgb(var(--main-cover-color));
+          opacity: 0.8;
         }
       }
-      .info-group {
-        width: 100%;
+    }
+    .mobile-content {
+      flex: 1;
+      display: flex;
+      width: 200%;
+      height: 100%;
+      transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+      &.swiping {
+        transition: none;
+      }
+      .page {
+        width: 50%;
+        height: 100%;
+        flex-shrink: 0;
+        position: relative;
+      }
+      .info-page {
         display: flex;
         flex-direction: column;
-        .song-info-bar {
+        align-items: center;
+        padding: 0 24px 40px 24px;
+        overflow-y: auto;
+        .cover-section {
+          flex: 1;
           width: 100%;
           display: flex;
-          justify-content: space-between;
-          margin-bottom: 24px;
-          .info-section {
-            flex: 1;
-            min-width: 0;
-            margin-right: 16px;
-            :deep(.mobile-data) {
-              width: 100%;
-              max-width: 100%;
-              .name {
-                margin-left: 0;
+          align-items: center;
+          justify-content: center;
+          margin-top: 60px;
+          margin-bottom: 20px;
+          :deep(.player-cover) {
+            width: min(100%, 45vh);
+            // height: min(85vw, 45vh);
+            &.record {
+              width: 40vh;
+              .cover-img {
+                width: 40vh;
+                height: 40vh;
+                min-width: 40vh;
               }
-            }
-          }
-          .info-actions {
-            display: flex;
-            padding-top: 24px;
-            gap: 16px;
-            flex-shrink: 0;
-            .action-btn {
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              width: 40px;
-              height: 40px;
-              border-radius: 50%;
-              cursor: pointer;
-              transition: background-color 0.2s;
-              &:active {
-                background-color: rgba(255, 255, 255, 0.1);
+              .pointer {
+                width: 10vh;
+                top: -9.5vh;
               }
-              .n-icon {
-                color: rgb(var(--main-cover-color));
-                opacity: 0.6;
-                transition:
-                  opacity 0.2s,
-                  transform 0.2s;
-                &.liked {
-                  fill: rgb(var(--main-cover-color));
-                  opacity: 1;
+              @media (max-width: 512px) {
+                width: 36vh;
+                .cover-img {
+                  width: 36vh;
+                  height: 36vh;
+                  min-width: 36vh;
                 }
               }
             }
           }
         }
-        .progress-section {
-          display: flex;
-          align-items: center;
-          margin: 0 4px 30px;
-          .time {
-            font-size: 12px;
-            opacity: 0.6;
-            width: 40px;
-            text-align: center;
-            color: rgb(var(--main-cover-color));
-            font-variant-numeric: tabular-nums;
-          }
-          .n-slider {
-            margin: 0 12px;
-          }
-        }
-        .control-section {
+        .info-group {
           width: 100%;
-          max-width: 400px;
-          margin: 0 auto 30px;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 0 10px;
-          .placeholder {
-            width: 24px;
-          }
-          .mode-btn {
-            opacity: 0.8;
-            cursor: pointer;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            .n-icon {
-              color: rgb(var(--main-cover-color));
-            }
-          }
-          .ctrl-btn {
-            cursor: pointer;
-            width: 50px;
-            height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            .n-icon {
-              color: rgb(var(--main-cover-color));
-            }
-          }
-          .play-btn {
-            width: 60px;
-            height: 60px;
-            font-size: 26px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: transform 0.2s;
-            background-color: rgba(var(--main-cover-color), 0.2);
-            color: rgb(var(--main-cover-color));
-            &.n-button--primary-type {
-              --n-color: rgba(var(--main-cover-color), 0.14);
-              --n-color-hover: rgba(var(--main-cover-color), 0.2);
-              --n-color-focus: rgba(var(--main-cover-color), 0.2);
-              --n-color-pressed: rgba(var(--main-cover-color), 0.12);
-            }
-            &:active {
-              transform: scale(0.95);
-            }
-          }
-        }
-      }
-    }
-    .lyric-page {
-      padding: 0 24px;
-      padding-top: 60px;
-      display: flex;
-      flex-direction: column;
-      .lyric-header {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        margin-bottom: 20px;
-        flex-shrink: 0;
-        padding: 10px 20px 0;
-        .lyric-cover {
-          width: 50px;
-          height: 50px;
-          flex-shrink: 0;
-          :deep(img) {
-            border-radius: 6px;
-            width: 100%;
-            height: 100%;
-          }
-          border-radius: 6px;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-        .lyric-info {
-          flex: 1;
-          min-width: 0;
           display: flex;
           flex-direction: column;
-          justify-content: center;
-          .name {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 2px;
+          .song-info-bar {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            .info-section {
+              flex: 1;
+              min-width: 0;
+              margin-right: 16px;
+              :deep(.mobile-data) {
+                width: 100%;
+                max-width: 100%;
+                .name {
+                  margin-left: 0;
+                }
+              }
+            }
+            .info-actions {
+              display: flex;
+              padding-top: 24px;
+              gap: 16px;
+              flex-shrink: 0;
+              .action-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                cursor: pointer;
+                transition: background-color 0.2s;
+                &:active {
+                  background-color: rgba(255, 255, 255, 0.1);
+                }
+                .n-icon {
+                  color: rgb(var(--main-cover-color));
+                  opacity: 0.6;
+                  transition:
+                    opacity 0.2s,
+                    transform 0.2s;
+                  &.liked {
+                    fill: rgb(var(--main-cover-color));
+                    opacity: 1;
+                  }
+                }
+              }
+            }
           }
-          .artist {
-            font-size: 13px;
-            opacity: 0.6;
+          .progress-section {
+            display: flex;
+            align-items: center;
+            margin: 0 4px 30px;
+            .time {
+              font-size: 12px;
+              opacity: 0.6;
+              width: 40px;
+              text-align: center;
+              color: rgb(var(--main-cover-color));
+              font-variant-numeric: tabular-nums;
+            }
+            .n-slider {
+              margin: 0 12px;
+            }
           }
-        }
-        .action-btn {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 40px;
-          height: 40px;
-          border-radius: 50%;
-          cursor: pointer;
-          transition: background-color 0.2s;
-          margin-left: 4px;
-          &:active {
-            background-color: rgba(255, 255, 255, 0.1);
-          }
-          .n-icon {
-            color: rgb(var(--main-cover-color));
-            opacity: 0.6;
-            transition: all 0.2s;
-            &.liked {
-              fill: rgb(var(--main-cover-color));
-              opacity: 1;
+          .control-section {
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 10px;
+            .placeholder {
+              width: 24px;
+            }
+            .mode-btn {
+              opacity: 0.8;
+              cursor: pointer;
+              width: 40px;
+              height: 40px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              .n-icon {
+                color: rgb(var(--main-cover-color));
+              }
+            }
+            .ctrl-btn {
+              cursor: pointer;
+              width: 50px;
+              height: 50px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              .n-icon {
+                color: rgb(var(--main-cover-color));
+              }
+            }
+            .play-btn {
+              width: 60px;
+              height: 60px;
+              font-size: 26px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              cursor: pointer;
+              transition: transform 0.2s;
+              background-color: rgba(var(--main-cover-color), 0.2);
+              color: rgb(var(--main-cover-color));
+              &.n-button--primary-type {
+                --n-color: rgba(var(--main-cover-color), 0.14);
+                --n-color-hover: rgba(var(--main-cover-color), 0.2);
+                --n-color-focus: rgba(var(--main-cover-color), 0.2);
+                --n-color-pressed: rgba(var(--main-cover-color), 0.12);
+              }
+              &:active {
+                transform: scale(0.95);
+              }
             }
           }
         }
       }
-      .lyric-main {
-        flex: 1;
-        min-height: 0;
-        position: relative;
+      .lyric-page {
+        padding: 0 24px;
+        padding-top: 60px;
+        display: flex;
+        flex-direction: column;
+        .lyric-header {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          margin-bottom: 20px;
+          flex-shrink: 0;
+          padding: 10px 20px 0;
+          .lyric-cover {
+            width: 50px;
+            height: 50px;
+            flex-shrink: 0;
+            :deep(img) {
+              border-radius: 6px;
+              width: 100%;
+              height: 100%;
+            }
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+          }
+          .lyric-info {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            .name {
+              font-size: 18px;
+              font-weight: bold;
+              margin-bottom: 2px;
+            }
+            .artist {
+              font-size: 13px;
+              opacity: 0.6;
+            }
+          }
+          .action-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-left: 4px;
+            &:active {
+              background-color: rgba(255, 255, 255, 0.1);
+            }
+            .n-icon {
+              color: rgb(var(--main-cover-color));
+              opacity: 0.6;
+              transition: all 0.2s;
+              &.liked {
+                fill: rgb(var(--main-cover-color));
+                opacity: 1;
+              }
+            }
+          }
+        }
+        .lyric-main {
+          flex: 1;
+          min-height: 0;
+          position: relative;
+        }
+      }
+    }
+    .pagination {
+      position: absolute;
+      bottom: 24px;
+      left: 0;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      pointer-events: none;
+      .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background-color: rgba(255, 255, 255, 0.2);
+        transition: all 0.3s;
+        &.active {
+          background-color: rgb(var(--main-cover-color));
+          width: 16px;
+          border-radius: 4px;
+          opacity: 0.8;
+        }
       }
     }
   }
-  .pagination {
-    position: absolute;
-    bottom: 24px;
-    left: 0;
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    gap: 8px;
-    pointer-events: none;
-    .dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background-color: rgba(255, 255, 255, 0.2);
-      transition: all 0.3s;
-      &.active {
-        background-color: rgb(var(--main-cover-color));
-        width: 16px;
-        border-radius: 4px;
-        opacity: 0.8;
-      }
-    }
-  }
-}
 </style>

@@ -33,58 +33,39 @@
 </template>
 
 <script setup lang="ts">
-import { useSettingStore } from "@/stores";
-import { useSortable } from "@vueuse/integrations/useSortable";
-import type { Options } from "sortablejs";
-import SvgIcon from "@/components/Global/SvgIcon.vue";
+  import { useSettingStore } from "@/stores";
+  import { useSortable } from "@vueuse/integrations/useSortable";
+  import type { Options } from "sortablejs";
+  import SvgIcon from "@/components/Global/SvgIcon.vue";
 
-const settingStore = useSettingStore();
+  const settingStore = useSettingStore();
 
-const sortableRef = ref<HTMLElement | null>(null);
+  const sortableRef = ref<HTMLElement | null>(null);
 
-// 更新排序值
-const updateSortOrder = () => {
-  settingStore.homePageSections.forEach((item, index) => {
-    item.order = index;
+  // 更新排序值
+  const updateSortOrder = () => {
+    settingStore.homePageSections.forEach((item, index) => {
+      item.order = index;
+    });
+  };
+
+  // 拖拽
+  useSortable(sortableRef, settingStore.homePageSections, {
+    animation: 150,
+    handle: ".n-icon",
+    onEnd: updateSortOrder,
+  } as Options);
+
+  onMounted(() => {
+    // 初始化排序值
+    updateSortOrder();
   });
-};
-
-// 拖拽
-useSortable(sortableRef, settingStore.homePageSections, {
-  animation: 150,
-  handle: ".n-icon",
-  onEnd: updateSortOrder,
-} as Options);
-
-onMounted(() => {
-  // 初始化排序值
-  updateSortOrder();
-});
 </script>
 
 <style scoped lang="scss">
-.greeting-item {
-  border-radius: 8px;
-  margin-bottom: 12px;
-  .name {
-    font-size: 16px;
-    line-height: normal;
-  }
-  .n-switch {
-    margin-left: auto;
-  }
-}
-.sortable-list {
-  margin-top: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  .sortable-item {
+  .greeting-item {
     border-radius: 8px;
-    .n-icon {
-      font-size: 16px;
-      cursor: move;
-    }
+    margin-bottom: 12px;
     .name {
       font-size: 16px;
       line-height: normal;
@@ -93,5 +74,24 @@ onMounted(() => {
       margin-left: auto;
     }
   }
-}
+  .sortable-list {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    .sortable-item {
+      border-radius: 8px;
+      .n-icon {
+        font-size: 16px;
+        cursor: move;
+      }
+      .name {
+        font-size: 16px;
+        line-height: normal;
+      }
+      .n-switch {
+        margin-left: auto;
+      }
+    }
+  }
 </style>

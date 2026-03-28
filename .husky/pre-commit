@@ -1,0 +1,11 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🚀 运行代码质量检查..."
+
+# 运行 lint-staged
+npx lint-staged
+
+# 运行类型检查（可选，可以在CI中运行）
+# echo "🔍 运行类型检查..."
+# pnpm typecheck

@@ -21,9 +21,12 @@
   "scripts": {
     "format": "prettier --write .",
     "lint": "eslint . --max-warnings=0",
+    "lint:fix": "eslint . --fix",
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json --composite false",
     "typecheck:web": "vue-tsc --noEmit -p tsconfig.web.json --composite false",
     "typecheck": "pnpm typecheck:node && pnpm typecheck:web",
+    "prepare": "husky",
+    "precommit": "lint-staged",
     "build:native": "tsx scripts/build-native.ts",
     "start": "electron-vite preview",
     "dev": "pnpm build:native -- --dev && tsx scripts/dev.ts",
@@ -36,7 +39,8 @@
     "build:linux": "pnpm build && electron-builder --linux --config electron-builder.config.ts",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
-    "docs:preview": "vitepress preview docs"
+    "docs:preview": "vitepress preview docs",
+    "prepare": "husky"
   },
   "dependencies": {
     "@applemusic-like-lyrics/core": "^0.2.0",
@@ -110,6 +114,8 @@
     "eslint-plugin-vue": "^10.7.0",
     "fast-glob": "^3.3.3",
     "fastify": "^5.8.4",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
     "naive-ui": "^2.44.1",
     "prettier": "^3.8.1",
     "rimraf": "^6.1.3",

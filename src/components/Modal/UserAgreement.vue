@@ -126,63 +126,63 @@
 </template>
 
 <script setup lang="ts">
-import { isElectron } from "@/utils/env";
-import { useSettingStore } from "@/stores";
-import { CURRENT_AGREEMENT_VERSION } from "@/constants/agreement";
+  import { isElectron } from "@/utils/env";
+  import { useSettingStore } from "@/stores";
+  import { CURRENT_AGREEMENT_VERSION } from "@/constants/agreement";
 
-const emit = defineEmits<{
-  close: [];
-}>();
+  const emit = defineEmits<{
+    close: [];
+  }>();
 
-const settingStore = useSettingStore();
-const readOverRef = ref<HTMLElement | null>(null);
+  const settingStore = useSettingStore();
+  const readOverRef = ref<HTMLElement | null>(null);
 
-// 是否阅读完毕
-const isReadOver = useElementVisibility(readOverRef);
+  // 是否阅读完毕
+  const isReadOver = useElementVisibility(readOverRef);
 
-// 同意协议
-const agreeToAgreement = () => {
-  if (!isReadOver.value) return;
-  // 更新协议版本
-  settingStore.userAgreementVersion = CURRENT_AGREEMENT_VERSION;
-  // 关闭弹窗
-  emit("close");
-};
+  // 同意协议
+  const agreeToAgreement = () => {
+    if (!isReadOver.value) return;
+    // 更新协议版本
+    settingStore.userAgreementVersion = CURRENT_AGREEMENT_VERSION;
+    // 关闭弹窗
+    emit("close");
+  };
 
-// 关闭软件
-const closeApp = () => {
-  window.electron.ipcRenderer.send("quit-app");
-};
+  // 关闭软件
+  const closeApp = () => {
+    window.electron.ipcRenderer.send("quit-app");
+  };
 </script>
 
 <style lang="scss" scoped>
-.user-agreement {
-  :deep(.scrollbar) {
-    max-height: 60vh;
-    margin-bottom: 20px;
-    .n-scrollbar-content {
-      overflow: hidden;
-      padding-right: 12px;
+  .user-agreement {
+    :deep(.scrollbar) {
+      max-height: 60vh;
+      margin-bottom: 20px;
+      .n-scrollbar-content {
+        overflow: hidden;
+        padding-right: 12px;
+      }
+    }
+    .n-alert {
+      margin: 20px 0;
+    }
+    .title {
+      text-align: center;
+    }
+    .n-p {
+      font-size: 16px;
+      text-indent: 2em;
+    }
+    .n-ol {
+      font-size: 16px;
+    }
+    .n-card {
+      --n-font-size: 18px;
+      --n-border-radius: 12px;
+      margin-top: 20px;
+      margin-bottom: 20px;
     }
   }
-  .n-alert {
-    margin: 20px 0;
-  }
-  .title {
-    text-align: center;
-  }
-  .n-p {
-    font-size: 16px;
-    text-indent: 2em;
-  }
-  .n-ol {
-    font-size: 16px;
-  }
-  .n-card {
-    --n-font-size: 18px;
-    --n-border-radius: 12px;
-    margin-top: 20px;
-    margin-bottom: 20px;
-  }
-}
 </style>

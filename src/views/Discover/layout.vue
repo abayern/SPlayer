@@ -28,33 +28,33 @@
 </template>
 
 <script setup lang="ts">
-import { useSettingStore } from "@/stores";
-const router = useRouter();
-const settingStore = useSettingStore();
+  import { useSettingStore } from "@/stores";
+  const router = useRouter();
+  const settingStore = useSettingStore();
 
-// 发现路由
-const discoverType = ref<string>(
-  (router.currentRoute.value?.name as string) || "discover-playlists",
-);
+  // 发现路由
+  const discoverType = ref<string>(
+    (router.currentRoute.value?.name as string) || "discover-playlists",
+  );
 </script>
 
 <style lang="scss" scoped>
-.discover {
-  display: flex;
-  flex-direction: column;
-  .title {
+  .discover {
     display: flex;
-    align-items: flex-end;
-    line-height: normal;
-    margin-top: 12px;
-    margin-bottom: 20px;
-    height: 40px;
-    .keyword {
-      font-size: 30px;
-      font-weight: bold;
-      margin-right: 12px;
+    flex-direction: column;
+    .title {
+      display: flex;
+      align-items: flex-end;
       line-height: normal;
+      margin-top: 12px;
+      margin-bottom: 20px;
+      height: 40px;
+      .keyword {
+        font-size: 30px;
+        font-weight: bold;
+        margin-right: 12px;
+        line-height: normal;
+      }
     }
   }
-}
 </style>

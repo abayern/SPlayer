@@ -18,50 +18,50 @@
 </template>
 
 <script setup lang="ts">
-const zoomPercentage = ref(100);
+  const zoomPercentage = ref(100);
 
-watch(zoomPercentage, (newVal) => {
-  if (newVal) {
-    const factor = newVal / 100;
-    window.electron.ipcRenderer.invoke("set-zoom-factor", factor);
-  }
-});
+  watch(zoomPercentage, (newVal) => {
+    if (newVal) {
+      const factor = newVal / 100;
+      window.electron.ipcRenderer.invoke("set-zoom-factor", factor);
+    }
+  });
 
-const resetZoom = () => {
-  zoomPercentage.value = 100;
-};
+  const resetZoom = () => {
+    zoomPercentage.value = 100;
+  };
 
-onMounted(async () => {
-  const currentZoom = await window.electron.ipcRenderer.invoke("get-zoom-factor");
-  zoomPercentage.value = Math.round(currentZoom * 100);
-});
+  onMounted(async () => {
+    const currentZoom = await window.electron.ipcRenderer.invoke("get-zoom-factor");
+    zoomPercentage.value = Math.round(currentZoom * 100);
+  });
 </script>
 
 <style lang="scss" scoped>
-.scaling-modal {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 24px;
-  padding: 24px 0;
-
-  .scaling-input {
-    width: 200px;
-    text-align: center;
-    :deep(.n-input__input-el) {
-      text-align: center;
-    }
-  }
-
-  .tip {
+  .scaling-modal {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
-    .value {
-      font-size: 13px;
+    justify-content: center;
+    gap: 24px;
+    padding: 24px 0;
+
+    .scaling-input {
+      width: 200px;
+      text-align: center;
+      :deep(.n-input__input-el) {
+        text-align: center;
+      }
+    }
+
+    .tip {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      .value {
+        font-size: 13px;
+      }
     }
   }
-}
 </style>

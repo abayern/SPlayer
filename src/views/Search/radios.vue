@@ -25,46 +25,47 @@
 </template>
 
 <script setup lang="ts">
-import type { CoverType } from "@/types/main";
-import { searchResult } from "@/api/search";
-import { formatCoverList } from "@/utils/format";
-import { useSettingStore } from "@/stores";
+  import type { CoverType } from "@/types/main";
+  import { searchResult } from "@/api/search";
+  import { formatCoverList } from "@/utils/format";
+  import { useSettingStore } from "@/stores";
 
-const props = defineProps<{
-  keyword: string;
-}>();
+  const props = defineProps<{
+    keyword: string;
+  }>();
 
-const settingStore = useSettingStore();
+  const settingStore = useSettingStore();
 
-// 搜索数据
-const hasMore = ref<boolean>(true);
-const loading = ref<boolean>(true);
-const searchOffset = ref<number>(0);
-const searchCount = ref<number>(1);
-const searchResultData = ref<CoverType[]>([]);
+  // 搜索数据
+  const hasMore = ref<boolean>(true);
+  const loading = ref<boolean>(true);
+  const searchOffset = ref<number>(0);
+  const searchCount = ref<number>(1);
+  const searchResultData = ref<CoverType[]>([]);
 
-// 获取搜索结果
-const getSearchResult = async () => {
-  // 获取数据
-  loading.value = true;
-  const result = await searchResult(props.keyword, 50, searchOffset.value, 1009);
-  // 是否还有
-  hasMore.value = result.result?.hasMore || result.result?.playlistCount > searchOffset.value + 50;
-  // 搜索总数
-  searchCount.value = result.result?.djRadiosCount;
-  // 处理数据
-  const radioData = formatCoverList(result.result.djRadios);
-  searchResultData.value = searchResultData.value?.concat(radioData);
-  loading.value = false;
-};
+  // 获取搜索结果
+  const getSearchResult = async () => {
+    // 获取数据
+    loading.value = true;
+    const result = await searchResult(props.keyword, 50, searchOffset.value, 1009);
+    // 是否还有
+    hasMore.value =
+      result.result?.hasMore || result.result?.playlistCount > searchOffset.value + 50;
+    // 搜索总数
+    searchCount.value = result.result?.djRadiosCount;
+    // 处理数据
+    const radioData = formatCoverList(result.result.djRadios);
+    searchResultData.value = searchResultData.value?.concat(radioData);
+    loading.value = false;
+  };
 
-// 加载更多
-const loadMore = () => {
-  searchOffset.value += 50;
-  getSearchResult();
-};
+  // 加载更多
+  const loadMore = () => {
+    searchOffset.value += 50;
+    getSearchResult();
+  };
 
-onMounted(() => {
-  getSearchResult();
-});
+  onMounted(() => {
+    getSearchResult();
+  });
 </script>

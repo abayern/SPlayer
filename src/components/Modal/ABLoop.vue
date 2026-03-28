@@ -84,57 +84,57 @@
 </template>
 
 <script setup lang="ts">
-import { useStatusStore } from "@/stores";
-import { useAudioManager } from "@/core/player/AudioManager";
-import { convertSecondsToTime } from "@/utils/time";
+  import { useStatusStore } from "@/stores";
+  import { useAudioManager } from "@/core/player/AudioManager";
+  import { convertSecondsToTime } from "@/utils/time";
 
-const statusStore = useStatusStore();
-const audioManager = useAudioManager();
+  const statusStore = useStatusStore();
+  const audioManager = useAudioManager();
 
-const canEnable = computed(() => {
-  return (
-    statusStore.abLoop.pointA !== null &&
-    statusStore.abLoop.pointB !== null &&
-    statusStore.abLoop.pointB > statusStore.abLoop.pointA
-  );
-});
+  const canEnable = computed(() => {
+    return (
+      statusStore.abLoop.pointA !== null &&
+      statusStore.abLoop.pointB !== null &&
+      statusStore.abLoop.pointB > statusStore.abLoop.pointA
+    );
+  });
 
-const formatTime = (time: number | null) => {
-  if (time === null) return "未设置";
-  return convertSecondsToTime(time);
-};
+  const formatTime = (time: number | null) => {
+    if (time === null) return "未设置";
+    return convertSecondsToTime(time);
+  };
 
-const setPoint = (point: "A" | "B") => {
-  const current = audioManager.currentTime;
-  if (point === "A") {
-    statusStore.abLoop.pointA = Number(current.toFixed(2));
-  } else {
-    statusStore.abLoop.pointB = Number(current.toFixed(2));
-  }
-  // Auto disable if invalid
-  const { pointA, pointB } = statusStore.abLoop;
-  if (pointA !== null && pointB !== null && pointA >= pointB) {
+  const setPoint = (point: "A" | "B") => {
+    const current = audioManager.currentTime;
+    if (point === "A") {
+      statusStore.abLoop.pointA = Number(current.toFixed(2));
+    } else {
+      statusStore.abLoop.pointB = Number(current.toFixed(2));
+    }
+    // Auto disable if invalid
+    const { pointA, pointB } = statusStore.abLoop;
+    if (pointA !== null && pointB !== null && pointA >= pointB) {
+      statusStore.abLoop.enable = false;
+    }
+  };
+
+  const clearPoint = (point: "A" | "B") => {
+    if (point === "A") {
+      statusStore.abLoop.pointA = null;
+    } else {
+      statusStore.abLoop.pointB = null;
+    }
     statusStore.abLoop.enable = false;
-  }
-};
-
-const clearPoint = (point: "A" | "B") => {
-  if (point === "A") {
-    statusStore.abLoop.pointA = null;
-  } else {
-    statusStore.abLoop.pointB = null;
-  }
-  statusStore.abLoop.enable = false;
-};
+  };
 </script>
 
 <style scoped lang="scss">
-.ab-loop {
-  width: 100%;
-  .open,
-  .point-card {
+  .ab-loop {
     width: 100%;
-    border-radius: 8px;
+    .open,
+    .point-card {
+      width: 100%;
+      border-radius: 8px;
+    }
   }
-}
 </style>

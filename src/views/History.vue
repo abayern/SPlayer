@@ -56,61 +56,61 @@
 </template>
 
 <script setup lang="ts">
-import { useDataStore } from "@/stores";
-import { usePlayerController } from "@/core/player/PlayerController";
+  import { useDataStore } from "@/stores";
+  import { usePlayerController } from "@/core/player/PlayerController";
 
-const player = usePlayerController();
-const dataStore = useDataStore();
+  const player = usePlayerController();
+  const dataStore = useDataStore();
 
-// 清空最近播放
-const cleanHistory = () => {
-  window.$dialog.warning({
-    title: "清空列表",
-    content: "确认清空最近播放列表？该操作不可撤销！",
-    positiveText: "确认",
-    negativeText: "取消",
-    onPositiveClick: async () => {
-      await dataStore.clearHistory();
-      window.$message.success("最近播放列表已清空");
-    },
-  });
-};
+  // 清空最近播放
+  const cleanHistory = () => {
+    window.$dialog.warning({
+      title: "清空列表",
+      content: "确认清空最近播放列表？该操作不可撤销！",
+      positiveText: "确认",
+      negativeText: "取消",
+      onPositiveClick: async () => {
+        await dataStore.clearHistory();
+        window.$message.success("最近播放列表已清空");
+      },
+    });
+  };
 </script>
 
 <style lang="scss" scoped>
-.history {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  .title {
+  .history {
     display: flex;
-    align-items: flex-end;
-    line-height: normal;
-    margin-top: 12px;
-    margin-bottom: 20px;
-    .keyword {
-      font-size: 30px;
-      font-weight: bold;
-      margin-right: 8px;
+    flex-direction: column;
+    height: 100%;
+    .title {
+      display: flex;
+      align-items: flex-end;
       line-height: normal;
+      margin-top: 12px;
+      margin-bottom: 20px;
+      .keyword {
+        font-size: 30px;
+        font-weight: bold;
+        margin-right: 8px;
+        line-height: normal;
+      }
+      .size {
+        font-size: 15px;
+        font-weight: normal;
+        line-height: 30px;
+      }
     }
-    .size {
-      font-size: 15px;
-      font-weight: normal;
-      line-height: 30px;
+    .menu {
+      width: 100%;
+      margin-bottom: 12px;
+      .n-button {
+        height: 40px;
+        transition: all 0.3s var(--n-bezier);
+      }
+    }
+    .song-list {
+      flex: 1;
+      overflow: hidden;
     }
   }
-  .menu {
-    width: 100%;
-    margin-bottom: 12px;
-    .n-button {
-      height: 40px;
-      transition: all 0.3s var(--n-bezier);
-    }
-  }
-  .song-list {
-    flex: 1;
-    overflow: hidden;
-  }
-}
 </style>

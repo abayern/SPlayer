@@ -26,81 +26,81 @@
 </template>
 
 <script setup lang="ts">
-import { useStatusStore, useMusicStore } from "@/stores";
+  import { useStatusStore, useMusicStore } from "@/stores";
 
-const musicStore = useMusicStore();
-const statusStore = useStatusStore();
+  const musicStore = useMusicStore();
+  const statusStore = useStatusStore();
 
-// Fullscreen
-const { isFullscreen, toggle: toggleFullscreen } = useFullscreen();
+  // Fullscreen
+  const { isFullscreen, toggle: toggleFullscreen } = useFullscreen();
 </script>
 
 <style lang="scss" scoped>
-.player-menu {
-  position: absolute;
-  top: 0;
-  width: 100%;
-  min-height: 80px;
-  overflow: hidden;
-  z-index: 100;
-  cursor: pointer;
-  .menu-content {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
+  .player-menu {
+    position: absolute;
+    top: 0;
     width: 100%;
-    height: 100%;
-  }
-  .drag-dom {
-    height: 80px;
-    margin: 0 100px;
-    flex: 1;
-    -webkit-app-region: drag;
-  }
-  .left,
-  .right {
-    padding: 0 20px;
-    transition: opacity 0.3s;
-    .menu-icon {
+    min-height: 80px;
+    overflow: hidden;
+    z-index: 100;
+    cursor: pointer;
+    .menu-content {
       display: flex;
+      flex-direction: row;
+      justify-content: space-between;
       align-items: center;
-      justify-content: center;
-      width: 40px;
-      height: 40px;
-      border-radius: 8px;
-      transition:
-        opacity 0.3s,
-        background-color 0.3s,
-        transform 0.3s;
-      cursor: pointer;
-      .n-icon {
-        font-size: 28px;
-        color: rgb(var(--main-cover-color));
-      }
-      &:hover {
-        transform: scale(1.05);
-        background-color: rgba(var(--main-cover-color), 0.14);
-        opacity: 1;
-      }
-      &:active {
-        transform: scale(1);
-      }
+      width: 100%;
+      height: 100%;
     }
-  }
-  .left {
-    .menu-icon {
-      opacity: 0.6;
-      &.open {
-        opacity: 1;
+    .drag-dom {
+      height: 80px;
+      margin: 0 100px;
+      flex: 1;
+      -webkit-app-region: drag;
+    }
+    .left,
+    .right {
+      padding: 0 20px;
+      transition: opacity 0.3s;
+      .menu-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        transition:
+          opacity 0.3s,
+          background-color 0.3s,
+          transform 0.3s;
+        cursor: pointer;
+        .n-icon {
+          font-size: 28px;
+          color: rgb(var(--main-cover-color));
+        }
         &:hover {
+          transform: scale(1.05);
+          background-color: rgba(var(--main-cover-color), 0.14);
           opacity: 1;
         }
+        &:active {
+          transform: scale(1);
+        }
       }
-      &:hover {
+    }
+    .left {
+      .menu-icon {
         opacity: 0.6;
+        &.open {
+          opacity: 1;
+          &:hover {
+            opacity: 1;
+          }
+        }
+        &:hover {
+          opacity: 0.6;
+        }
       }
     }
   }
-}
 </style>

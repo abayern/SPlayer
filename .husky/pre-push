@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🔍 推送前检查..."
+
+# 运行完整的代码质量检查
+echo "📋 运行ESLint检查..."
+pnpm lint
+
+echo "✅ 代码质量检查通过，可以推送"

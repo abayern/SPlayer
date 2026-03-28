@@ -181,229 +181,229 @@
 </template>
 
 <script setup lang="ts">
-import { SettingItem, SettingAction } from "@/types/settings";
+  import { SettingItem, SettingAction } from "@/types/settings";
 
-defineOptions({
-  name: "SettingItemRenderer",
-});
+  defineOptions({
+    name: "SettingItemRenderer",
+  });
 
-const props = defineProps<{
-  item: SettingItem;
-  highlighted?: boolean;
-}>();
+  const props = defineProps<{
+    item: SettingItem;
+    highlighted?: boolean;
+  }>();
 
-// 基础数据双向绑定处理
-const baseModelValue = computed({
-  get: () => {
-    if (props.item.value !== undefined) {
-      return toValue(props.item.value);
+  // 基础数据双向绑定处理
+  const baseModelValue = computed({
+    get: () => {
+      if (props.item.value !== undefined) {
+        return toValue(props.item.value);
+      }
+      return props.item.get ? props.item.get() : undefined;
+    },
+    set: (val) => {
+      if (props.item.value !== undefined && typeof props.item.value !== "function") {
+        (props.item.value as Ref<any>).value = val;
+      } else if (props.item.set) {
+        props.item.set(val);
+      }
+    },
+  });
+
+  // 强制显示条件判断
+  const isForcedConditionMet = computed(() => {
+    if (!props.item.forceIf) return false;
+    const condition = props.item.forceIf.condition;
+    if (typeof condition === "function") {
+      return condition();
     }
-    return props.item.get ? props.item.get() : undefined;
-  },
-  set: (val) => {
-    if (props.item.value !== undefined && typeof props.item.value !== "function") {
-      (props.item.value as Ref<any>).value = val;
-    } else if (props.item.set) {
-      props.item.set(val);
-    }
-  },
-});
+    return unref(condition);
+  });
 
-// 强制显示条件判断
-const isForcedConditionMet = computed(() => {
-  if (!props.item.forceIf) return false;
-  const condition = props.item.forceIf.condition;
-  if (typeof condition === "function") {
-    return condition();
-  }
-  return unref(condition);
-});
+  // 最终使用的 modelValue
+  const modelValue = computed({
+    get: () => {
+      if (isForcedConditionMet.value) {
+        const forcedValueRef = props.item.forceIf!.forcedValue;
+        if (forcedValueRef !== undefined) return toValue(forcedValueRef);
+      }
+      return baseModelValue.value;
+    },
+    set: (val) => {
+      // 如果条件满足，则不允许修改原始值（或者视需求而定，通常互斥时不仅显示强制值，且禁用）
+      // 这里的逻辑是：如果被强制显示了，set 操作不应该影响原始值，或者应该被忽略
+      if (!isForcedConditionMet.value) {
+        baseModelValue.value = val;
+      }
+    },
+  });
 
-// 最终使用的 modelValue
-const modelValue = computed({
-  get: () => {
+  // 禁用状态
+  const isDisabled = computed(() => {
+    if (isForcedConditionMet.value) return true;
+    if (props.item.disabled === undefined) return false;
+    return toValue(props.item.disabled);
+  });
+
+  // 描述内容
+  const descriptionContent = computed(() => {
     if (isForcedConditionMet.value) {
-      const forcedValueRef = props.item.forceIf!.forcedValue;
-      if (forcedValueRef !== undefined) return toValue(forcedValueRef);
+      const forcedDescriptionRef = props.item.forceIf!.forcedDescription;
+      if (forcedDescriptionRef !== undefined) return toValue(forcedDescriptionRef);
     }
-    return baseModelValue.value;
-  },
-  set: (val) => {
-    // 如果条件满足，则不允许修改原始值（或者视需求而定，通常互斥时不仅显示强制值，且禁用）
-    // 这里的逻辑是：如果被强制显示了，set 操作不应该影响原始值，或者应该被忽略
-    if (!isForcedConditionMet.value) {
-      baseModelValue.value = val;
+    return toValue(props.item.description);
+  });
+
+  // 鼠标悬停提示
+  const title = computed(() => {
+    if (isForcedConditionMet.value) {
+      const forcedTitleRef = props.item.forceIf!.forcedTitle;
+      if (forcedTitleRef !== undefined) return toValue(forcedTitleRef);
     }
-  },
-});
+    return toValue(props.item.title);
+  });
 
-// 禁用状态
-const isDisabled = computed(() => {
-  if (isForcedConditionMet.value) return true;
-  if (props.item.disabled === undefined) return false;
-  return toValue(props.item.disabled);
-});
+  // 解析子项
+  const resolvedChildren = computed(() => {
+    if (!props.item.children) return [];
+    return toValue(props.item.children);
+  });
 
-// 描述内容
-const descriptionContent = computed(() => {
-  if (isForcedConditionMet.value) {
-    const forcedDescriptionRef = props.item.forceIf!.forcedDescription;
-    if (forcedDescriptionRef !== undefined) return toValue(forcedDescriptionRef);
-  }
-  return toValue(props.item.description);
-});
+  // 计算子项是否展开
+  const isChildrenExpanded = computed(() => {
+    if (props.item.condition) {
+      return props.item.condition();
+    }
+    return modelValue.value === true;
+  });
 
-// 鼠标悬停提示
-const title = computed(() => {
-  if (isForcedConditionMet.value) {
-    const forcedTitleRef = props.item.forceIf!.forcedTitle;
-    if (forcedTitleRef !== undefined) return toValue(forcedTitleRef);
-  }
-  return toValue(props.item.title);
-});
+  // 判断是否显示
+  const isShow = (childItem: SettingItem) => {
+    if (childItem.show === undefined) return true;
+    return toValue(childItem.show);
+  };
 
-// 解析子项
-const resolvedChildren = computed(() => {
-  if (!props.item.children) return [];
-  return toValue(props.item.children);
-});
+  // 判断额外按钮是否显示
+  const isExtraButtonShow = (action: any) => {
+    if (action.show === undefined) return true;
+    return toValue(action.show);
+  };
 
-// 计算子项是否展开
-const isChildrenExpanded = computed(() => {
-  if (props.item.condition) {
-    return props.item.condition();
-  }
-  return modelValue.value === true;
-});
+  // 规范化选项数据
+  const normalizedOptions = computed(() => {
+    if (!props.item.options) return [];
+    return toValue(props.item.options);
+  });
 
-// 判断是否显示
-const isShow = (childItem: SettingItem) => {
-  if (childItem.show === undefined) return true;
-  return toValue(childItem.show);
-};
+  // 获取属性值
+  const resolve = toValue;
 
-// 判断额外按钮是否显示
-const isExtraButtonShow = (action: any) => {
-  if (action.show === undefined) return true;
-  return toValue(action.show);
-};
+  // 处理操作事件
+  const handleAction = () => {
+    if (props.item.action) {
+      props.item.action(modelValue.value);
+    }
+  };
 
-// 规范化选项数据
-const normalizedOptions = computed(() => {
-  if (!props.item.options) return [];
-  return toValue(props.item.options);
-});
+  // 计算是否显示恢复默认按钮
+  const showReset = computed(() => {
+    if (isDisabled.value) return false;
+    if (props.item.defaultValue === undefined) return false;
+    return modelValue.value !== props.item.defaultValue;
+  });
 
-// 获取属性值
-const resolve = toValue;
+  // 恢复默认
+  const handleReset = () => {
+    modelValue.value = props.item.defaultValue;
+  };
 
-// 处理操作事件
-const handleAction = () => {
-  if (props.item.action) {
-    props.item.action(modelValue.value);
-  }
-};
+  // 计算激活的按钮列表
+  const activeActions = computed(() => {
+    const actions: SettingAction[] = [];
 
-// 计算是否显示恢复默认按钮
-const showReset = computed(() => {
-  if (isDisabled.value) return false;
-  if (props.item.defaultValue === undefined) return false;
-  return modelValue.value !== props.item.defaultValue;
-});
+    // 额外按钮
+    if (props.item.extraButton && isExtraButtonShow(props.item.extraButton)) {
+      actions.push(props.item.extraButton);
+    }
 
-// 恢复默认
-const handleReset = () => {
-  modelValue.value = props.item.defaultValue;
-};
+    // 恢复默认按钮
+    if (showReset.value) {
+      actions.push({
+        label: "恢复默认",
+        type: "primary",
+        secondary: true,
+        strong: true,
+        action: handleReset,
+      });
+    }
 
-// 计算激活的按钮列表
-const activeActions = computed(() => {
-  const actions: SettingAction[] = [];
-
-  // 额外按钮
-  if (props.item.extraButton && isExtraButtonShow(props.item.extraButton)) {
-    actions.push(props.item.extraButton);
-  }
-
-  // 恢复默认按钮
-  if (showReset.value) {
-    actions.push({
-      label: "恢复默认",
-      type: "primary",
-      secondary: true,
-      strong: true,
-      action: handleReset,
-    });
-  }
-
-  return actions;
-});
+    return actions;
+  });
 </script>
 
 <style scoped lang="scss">
-.setting-item-wrapper {
-  width: 100%;
-  margin-bottom: 12px;
-  transition: margin 0.3s;
-  &:last-child {
-    margin-bottom: 0;
-  }
-  &.highlighted {
-    .set-item {
-      &::after {
-        animation: highlight-pulse 2.5s cubic-bezier(0.4, 0, 0.2, 1);
-        animation-delay: 0.5s;
+  .setting-item-wrapper {
+    width: 100%;
+    margin-bottom: 12px;
+    transition: margin 0.3s;
+    &:last-child {
+      margin-bottom: 0;
+    }
+    &.highlighted {
+      .set-item {
+        &::after {
+          animation: highlight-pulse 2.5s cubic-bezier(0.4, 0, 0.2, 1);
+          animation-delay: 0.5s;
+        }
       }
     }
   }
-}
-.set-item {
-  width: 100%;
-  border-radius: 8px;
-  overflow: hidden;
-  position: relative;
-  &::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(var(--primary), 0.25);
-    z-index: 1;
-    opacity: 0;
-    pointer-events: none;
+  .set-item {
+    width: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    &::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(var(--primary), 0.25);
+      z-index: 1;
+      opacity: 0;
+      pointer-events: none;
+    }
   }
-}
-:deep(.n-card__content) {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px;
-}
-
-.control-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  justify-content: flex-end;
-  flex: 1;
-}
-
-.set {
-  justify-content: flex-end;
-  min-width: 200px;
-  width: 200px;
-
-  &.n-switch {
-    width: max-content;
-    min-width: auto;
+  :deep(.n-card__content) {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
   }
 
-  @media (max-width: 768px) {
-    width: 140px;
-    min-width: 140px;
+  .control-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    justify-content: flex-end;
+    flex: 1;
   }
-}
+
+  .set {
+    justify-content: flex-end;
+    min-width: 200px;
+    width: 200px;
+
+    &.n-switch {
+      width: max-content;
+      min-width: auto;
+    }
+
+    @media (max-width: 768px) {
+      width: 140px;
+      min-width: 140px;
+    }
+  }
 </style>
