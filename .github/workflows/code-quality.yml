@@ -1,0 +1,94 @@
+# 代码质量检查工作流
+name: Code Quality
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+      - "feature/**"
+      - "bugfix/**"
+      - "hotfix/**"
+  pull_request:
+    branches:
+      - main
+      - dev
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: 22.x
+  PNPM_VERSION: 10
+
+jobs:
+  code-quality:
+    name: Code Quality Check
+    runs-on: ubuntu-latest
+
+    steps:
+      # 检出代码
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # 设置 pnpm
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      # 设置 Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+
+      # 安装依赖
+      - name: Install dependencies
+        run: pnpm install
+
+      # 运行类型检查
+      - name: TypeScript Type Check
+        run: pnpm typecheck
+
+      # 运行 ESLint 检查
+      - name: ESLint Check
+        run: pnpm lint
+
+      # 运行 Prettier 格式化检查
+      - name: Prettier Format Check
+        run: pnpm format --check
+
+      # 构建检查
+      - name: Build Check
+        run: pnpm build:native
+
+      # 代码质量报告
+      - name: Generate Code Quality Report
+        if: always()
+        run: |
+          echo "## 📊 代码质量报告" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### ✅ 检查项完成情况：" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **类型检查**: ${{ steps.typecheck.outcome }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **ESLint 检查**: ${{ steps.eslint.outcome }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Prettier 检查**: ${{ steps.prettier.outcome }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **构建检查**: ${{ steps.build.outcome }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📈 代码质量指标：" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **项目状态**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **运行时间**: ${{ job.steps[*].conclusion }}" >> $GITHUB_STEP_SUMMARY
+
+      # 上传 ESLint 报告
+      - name: Upload ESLint Report
+        if: failure() && steps.eslint.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: eslint-report
+          path: |
+            **/.eslintcache
+            **/eslint-report.json
+          retention-days: 7

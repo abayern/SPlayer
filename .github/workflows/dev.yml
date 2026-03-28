@@ -91,6 +91,14 @@ jobs:
       # 安装项目依赖
       - name: Install dependencies
         run: pnpm install
+
+      # 代码质量检查
+      - name: Code Quality Check
+        run: |
+          echo "🔍 运行代码质量检查..."
+          pnpm typecheck
+          pnpm lint
+          echo "✅ 代码质量检查通过"
       # 复制环境变量文件
       - name: Copy .env file on Windows
         if: runner.os == 'Windows'
